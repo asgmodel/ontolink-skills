@@ -118,7 +118,7 @@ checkout. Set the actual skill directory supported by your host:
 
 ```sh
 git clone https://github.com/asgmodel/ontolink-skills.git /path/to/ontolink-distribution
-python /path/to/ontolink-distribution/scripts/project_setup.py \
+python /path/to/ontolink-distribution/skills/ontolink-skills/scripts/project_setup.py \
   --project /path/to/my-project --skills-dir .agents/skills
 ```
 
@@ -150,8 +150,8 @@ never initialize a second graph to clear an error.
 From the application root after setup:
 
 ```sh
-python .rule/ontolink.py start --root . --skill-root .agents/skills/ontolink-skills
-python .rule/ontolink.py context --root . --skill-root .agents/skills/ontolink-skills
+python .agents/skills/ontolink-skills/.rule/ontolink.py start --root . --skill-root .agents/skills/ontolink-skills
+python .agents/skills/ontolink-skills/.rule/ontolink.py context --root . --skill-root .agents/skills/ontolink-skills
 ```
 
 Read the returned `workflow_skill` and relevant source before acting. The graph
@@ -166,7 +166,7 @@ Create each payload using the coordinator's record contract, then record it with
 the revision observed in current context:
 
 ```sh
-python .rule/ontolink.py record --root . --skill-root .agents/skills/ontolink-skills \
+python .agents/skills/ontolink-skills/.rule/ontolink.py record --root . --skill-root .agents/skills/ontolink-skills \
   --input .ontolink/records/scope-001.json --expected-revision 0
 ```
 
@@ -330,7 +330,7 @@ two commands against the original distribution checkout:
 
 ```sh
 git -C /path/to/ontolink-distribution pull --ff-only origin main
-python /path/to/ontolink-distribution/scripts/project_setup.py \
+python /path/to/ontolink-distribution/skills/ontolink-skills/scripts/project_setup.py \
   --project /path/to/my-project --skills-dir .agents/skills
 ```
 
@@ -362,7 +362,7 @@ to write the target project. Replace the example paths.
 Install OntoLink Skills from https://github.com/asgmodel/ontolink-skills.git
 for /absolute/path/to/my-project. Use a separate distribution checkout.
 Read the README and skills/ontolink-skills/.rule/ONTOLOGY-FIRST.md, resolve this host's project skill
-directory, and run scripts/project_setup.py with --project and --skills-dir.
+directory, and run skills/ontolink-skills/scripts/project_setup.py with --project and --skills-dir.
 Honor any existing explicit canonical state with --state. Preserve project data,
 application files, user instructions and unrelated skills. Inspect fresh context
 and report the installed paths, backup location, current revision and any failure.
@@ -374,7 +374,7 @@ and report the installed paths, backup location, current revision and any failur
 Update OntoLink for /absolute/path/to/my-project. Identify the existing distribution,
 installation method, skill directory and canonical state. Pause active writers,
 inspect local changes, and fast-forward the distribution without discarding work.
-Read its current instructions and run scripts/project_setup.py against the existing
+Read its current instructions and run skills/ontolink-skills/scripts/project_setup.py against the existing
 project, passing --state when configured. Preserve graph bytes, records, proofs,
 artifacts and application files. Keep backups and stop on compatibility errors;
 do not reset state or invent a migration. Refresh context and report versions,
@@ -384,7 +384,7 @@ new commands and any host-required reload.
 ### Start or resume
 
 ```text
-Use $ontolink-skills for this project. Follow .rule/ONTOLOGY-FIRST.md and resolve
+Use $ontolink-skills for this project. Follow .agents/skills/ontolink-skills/.rule/ONTOLOGY-FIRST.md and resolve
 the installed coordinator. Create or reuse the canonical state with start,
 query current context and continue the eligible phase. Inspect relevant source,
 perform the authorized work, and keep generated JSON and text under .ontolink.
@@ -489,10 +489,10 @@ separate automation; installing or invoking a skill does not create an always-on
 
 ## References and validation
 
-- [Quickstart and recording](https://github.com/asgmodel/ontolink-skills/blob/main/docs/quickstart.md)
-- [Knowledge model](https://github.com/asgmodel/ontolink-skills/blob/main/docs/knowledge-model.md) and [lifecycle](https://github.com/asgmodel/ontolink-skills/blob/main/docs/lifecycle.md)
-- [Project Intelligence](https://github.com/asgmodel/ontolink-skills/blob/main/docs/project-intelligence.md)
-- [Validation and limitations](https://github.com/asgmodel/ontolink-skills/blob/main/docs/validation.md)
+- [Quickstart and recording](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/quickstart.md)
+- [Knowledge model](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/knowledge-model.md) and [lifecycle](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/lifecycle.md)
+- [Project Intelligence](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/project-intelligence.md)
+- [Validation and limitations](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/validation.md)
 - [Execution contract](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/execution-contract.md) and [record contract](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/references/record-contract.md)
 - [Standards and attribution](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/assets/sources.json)
 
