@@ -1,0 +1,74 @@
+{
+  "name": "OntoLink Skills",
+  "repository": "ontolink-skills",
+  "version": "1.3.0",
+  "ontology": "assets/ontolink.owl",
+  "skills": [
+    {
+      "name": "ontolink-skills",
+      "role": "coordinator",
+      "sequence": 0,
+      "path": "."
+    },
+    {
+      "name": "ontolink-discovery",
+      "role": "phase",
+      "sequence": 1,
+      "path": "skills/ontolink-discovery"
+    },
+    {
+      "name": "ontolink-architecture",
+      "role": "phase",
+      "sequence": 2,
+      "path": "skills/ontolink-architecture"
+    },
+    {
+      "name": "ontolink-planning",
+      "role": "phase",
+      "sequence": 3,
+      "path": "skills/ontolink-planning"
+    },
+    {
+      "name": "ontolink-implementation",
+      "role": "phase",
+      "sequence": 4,
+      "path": "skills/ontolink-implementation"
+    },
+    {
+      "name": "ontolink-verification",
+      "role": "phase",
+      "sequence": 5,
+      "path": "skills/ontolink-verification"
+    },
+    {
+      "name": "ontolink-delivery",
+      "role": "phase",
+      "sequence": 6,
+      "path": "skills/ontolink-delivery"
+    },
+    {
+      "name": "ontolink-monitoring",
+      "role": "phase",
+      "sequence": 7,
+      "path": "skills/ontolink-monitoring"
+    }
+  ],
+  "engineeringAdapters": "External; not bundled",
+  "tokenReduction": "Selective retrieval objective; no measured savings asserted",
+  "projectIntelligence": {
+    "mode": "optional-generated-index",
+    "index": ".ontolink/index/project-index.json",
+    "canonicalState": "knowledge.owl remains authoritative",
+    "retrieval": "local BM25 plus canonical graph-neighborhood signals"
+  },
+  "projectRules": {
+    "policy": ".rule/ONTOLOGY-FIRST.md",
+    "adapter": ".rule/ontolink.py",
+    "generatedDirectory": ".ontolink",
+    "canonicalState": "knowledge.owl",
+    "refresh": "validate and query context after each successful adapter record",
+    "setup": "scripts/project_setup.py",
+    "updates": "Update the complete ontolink-skills package, including skills/ and .rule/, then rerun scripts/project_setup.py against the target project."
+  },
+  "layout": "One coordinator package with seven nested phase skills and bundled .rule integration."
+}

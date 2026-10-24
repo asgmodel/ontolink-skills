@@ -5,7 +5,7 @@ description: Execute the build phase of an OntoLink project using the ontology-m
 
 # OntoLink Implementation
 
-Resolve `ontolink-skills` by exact name. Read its execution contract and run its mediator against the real project state. Do not rely on platform-generated folder IDs or copy a second ontology into this skill.
+Resolve the bundled `ontolink-skills` coordinator at `../..` relative to this phase folder; read its [SKILL.md](../../SKILL.md). Read its execution contract and run its mediator against the real project state. Do not rely on platform-generated folder IDs or copy a second ontology into this skill.
 
 Before phase work, apply the coordinator's mandatory project bootstrap: create or reuse `knowledge.owl` at the actual project root without requiring a separate user request. Preserve any explicitly configured canonical state path.
 

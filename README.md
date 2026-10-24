@@ -2,7 +2,8 @@
 
 **Ontology-mediated project execution, from discovery to monitoring.**
 
-OntoLink connects eight agent skills through a shared OWL model and a persistent
+OntoLink ships one self-contained coordinator package with seven embedded phase
+skills, connected through a shared OWL model and a persistent
 project knowledge graph. It retrieves the current task, relevant dependencies,
 contracts and evidence so an agent can continue work across sessions without
 reloading every skill or the entire project history.
@@ -46,13 +47,13 @@ supports a constrained named-node RDF/XML representation, not general OWL reason
 | Order | Skill | Required outcome |
 | --- | --- | --- |
 | Coordinator | [ontolink-skills](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/SKILL.md) | Canonical knowledge, routing and handoffs |
-| 1 | [ontolink-discovery](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-discovery/SKILL.md) | Requirements and acceptance criteria |
-| 2 | [ontolink-architecture](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-architecture/SKILL.md) | Reviewed architecture and contracts |
-| 3 | [ontolink-planning](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-planning/SKILL.md) | Execution plan and dependencies |
-| 4 | [ontolink-implementation](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-implementation/SKILL.md) | Working implementation |
-| 5 | [ontolink-verification](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-verification/SKILL.md) | Current verification evidence |
-| 6 | [ontolink-delivery](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-delivery/SKILL.md) | Authorized delivery and handoff |
-| 7 | [ontolink-monitoring](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-monitoring/SKILL.md) | Observed health and follow-up work |
+| 1 | [ontolink-discovery](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-discovery/SKILL.md) | Requirements and acceptance criteria |
+| 2 | [ontolink-architecture](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-architecture/SKILL.md) | Reviewed architecture and contracts |
+| 3 | [ontolink-planning](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-planning/SKILL.md) | Execution plan and dependencies |
+| 4 | [ontolink-implementation](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-implementation/SKILL.md) | Working implementation |
+| 5 | [ontolink-verification](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-verification/SKILL.md) | Current verification evidence |
+| 6 | [ontolink-delivery](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-delivery/SKILL.md) | Authorized delivery and handoff |
+| 7 | [ontolink-monitoring](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-monitoring/SKILL.md) | Observed health and follow-up work |
 
 Phase order is enforced when work is accepted. A later phase cannot become ready
 or complete while its required earlier phases remain incomplete. Specialist
@@ -78,19 +79,36 @@ likelihood concerns a named event and time horizon. Neither closes tasks nor
 overrides blockers. Recording a message does not send it; sent-message records
 require a real external receipt and an authorized communication action.
 
+## Package layout
+
+Install or copy `skills/ontolink-skills/` as one complete directory. Its internal
+`skills/` contains all seven phase folders; `.rule/`, `scripts/`, `references/`,
+`assets/` and `agents/` travel with it. Each phase retains its own `SKILL.md`,
+metadata and references. The coordinator reads the selected bundled phase from
+its catalog; no separate phase installation is required.
+
+| Path within `skills/ontolink-skills/` | Contents |
+| --- | --- |
+| `SKILL.md` | Main entry point |
+| `skills/` | Discovery, architecture, planning, implementation, verification, delivery and monitoring |
+| `.rule/` | Shared policy and project adapter |
+| `scripts/` | Runtime, complete project installer and regression checks |
+| `references/` | All operational contracts and guides |
+| `assets/` | Ontology, shapes, catalog, provenance and examples |
+| `agents/` | Coordinator UI metadata |
+
 ## Install with npx
 
-With Node.js/npm available, install all eight skill packages for all supported
-agents:
+With Node.js 22.20+ and npm available, select the single coordinator package:
 
 ```sh
-npx skills add asgmodel/ontolink-skills --all
+npx skills add asgmodel/ontolink-skills --skill ontolink-skills
 ```
 
-`--all` selects all skills and all agents and skips confirmation prompts.
-Python 3.10+ is required to run the OntoLink mediator. The community Skills CLI
-manages the skill packages; external project rules and initialization require
-complete project setup below. Reload agent instructions if the host requires it.
+The package includes all seven nested phases, scripts, rules and references.
+Choose the agents in the installer. Python 3.10+ is required for the mediator.
+Copying or installing a skill does not execute project setup; run the bundled
+installer below to add project integration and create or reuse canonical state.
 
 ### Complete project setup
 
@@ -104,10 +122,22 @@ python /path/to/ontolink-distribution/scripts/project_setup.py \
   --project /path/to/my-project --skills-dir .agents/skills
 ```
 
-Setup copies all eight packages and rules, preserves unrelated skills and project
-files, and backs up replaced files under `.ontolink/backups/`. It manages copied
+Setup copies the single package with all nested phases and rules, preserves
+unrelated skills and project files, and backs up replaced files under
+`.ontolink/backups/`. It manages copied
 packages itself; do not assume those copies are registered in the npx installer's
 lock data. Use the update method corresponding to the installation you actually have.
+
+The same installer is included in the installed/downloaded package:
+
+```sh
+python /actual/path/ontolink-skills/scripts/project_setup.py \
+  --project /path/to/my-project --skills-dir .agents/skills
+```
+
+Existing managed sibling phase copies are backed up before migration into the
+single package. Their local customizations remain in the reported backup for
+review; unrelated skills, canonical graph bytes and project files are preserved.
 
 ## First use and everyday operation
 
@@ -287,14 +317,12 @@ installed and registered through the Skills CLI, run the update directly from
 the project directory:
 
 ```sh
-npx skills update ontolink-skills ontolink-discovery ontolink-architecture \
-  ontolink-planning ontolink-implementation ontolink-verification \
-  ontolink-delivery ontolink-monitoring --project
+npx skills update ontolink-skills --project
 ```
 
-This targets the eight OntoLink packages in the project scope. It does not update
-the repository's external `.rule` integration. For packages installed as copies
-by `project_setup.py`, use the distribution-and-setup update commands below instead.
+This targets the complete OntoLink package in the project scope. It updates
+the bundled phases and rules. Run project setup to refresh project-local
+integration. For packages installed as copies by `project_setup.py`, use the distribution-and-setup update commands below instead.
 
 An existing project can receive new skill instructions, scripts and commands
 without rebuilding its knowledge graph. Stop active agent work, then run these
@@ -307,7 +335,7 @@ python /path/to/ontolink-distribution/scripts/project_setup.py \
 ```
 
 Setup validates the existing graph with the incoming mediator before replacing
-packages, backs up replaced files, refreshes context, and checks that the existing
+the package, backs up replaced files, refreshes context, and checks that the existing
 graph bytes have not changed. It preserves recorded knowledge, proof files,
 generated artifacts and application source. Newly added package commands become
 available after installation and any host-required reload.
@@ -319,7 +347,8 @@ migration. Resolve local Git changes before pulling instead of discarding them.
 
 For an older installation consisting only of copied skill folders, clone the
 distribution and run setup with their actual parent directory as `--skills-dir`.
-It backs up the previous copies and reuses existing project knowledge. Never copy
+It backs up the previous copies, replaces managed sibling phases with the nested
+package, and reuses existing project knowledge. Never copy
 a bundled example graph over the application's canonical state.
 
 ## Prompts for coding agents
@@ -332,7 +361,7 @@ to write the target project. Replace the example paths.
 ```text
 Install OntoLink Skills from https://github.com/asgmodel/ontolink-skills.git
 for /absolute/path/to/my-project. Use a separate distribution checkout.
-Read the README and .rule/ONTOLOGY-FIRST.md, resolve this host's project skill
+Read the README and skills/ontolink-skills/.rule/ONTOLOGY-FIRST.md, resolve this host's project skill
 directory, and run scripts/project_setup.py with --project and --skills-dir.
 Honor any existing explicit canonical state with --state. Preserve project data,
 application files, user instructions and unrelated skills. Inspect fresh context
@@ -384,7 +413,7 @@ long explanations and narrative decisions.
 
 | File | Responsibility |
 | --- | --- |
-| [project_setup.py](https://github.com/asgmodel/ontolink-skills/blob/main/scripts/project_setup.py) | Installs or updates copied packages and external rules; backs up replaced paths, checks graph compatibility, preserves project state and rolls back replaced files on failure. |
+| [project_setup.py](https://github.com/asgmodel/ontolink-skills/blob/main/scripts/project_setup.py) | Compatibility entry point for the bundled installer; backs up replaced paths, checks graph compatibility, preserves project state and rolls back replaced files on failure. |
 | [check.py](https://github.com/asgmodel/ontolink-skills/blob/main/scripts/check.py) | Runs distribution checks: skill metadata, OWL/Turtle equivalence, SHACL, mediator validation, regression suites and sitemap completeness. |
 | [generate_sitemap.py](https://github.com/asgmodel/ontolink-skills/blob/main/scripts/generate_sitemap.py) | Builds or checks sitemap.xml from the public skill documentation and reference pages. |
 | [test_project_rules.py](https://github.com/asgmodel/ontolink-skills/blob/main/scripts/test_project_rules.py) | Tests fixed generated-file paths, post-record context refresh, revisions, locks, explicit state paths and failure recovery. |
@@ -411,11 +440,11 @@ current evidence and dependency impact. Its `context` and `validate` commands
 perform checks when invoked. Changed upstream knowledge is reconciled through
 records; querying context does not silently rewrite canonical state.
 
-The external [`.rule/ontolink.py`](https://github.com/asgmodel/ontolink-skills/blob/main/.rule/ontolink.py) adapter
+The bundled [`.rule/ontolink.py`](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/.rule/ontolink.py) adapter
 orchestrates those checks, refreshes context after successful records and on
 resume, and rebuilds an already-enabled optional index.
 
-The [ontolink-monitoring phase skill](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-monitoring/SKILL.md)
+The [ontolink-monitoring phase skill](https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-monitoring/SKILL.md)
 defines the agent's monitoring procedure. There is no standalone `monitor.py`,
 filesystem watcher or always-running monitoring service in this repository.
 

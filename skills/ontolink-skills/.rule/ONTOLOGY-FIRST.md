@@ -3,11 +3,11 @@
 ## First use and every resume
 
 Resolve the real target project and the installed `ontolink-skills` coordinator
-by exact name. Install the eight skill directories together. Read the coordinator's
+by exact name. Install the complete coordinator package, including its seven nested phase folders under `skills/`. Read the coordinator's
 execution contract once, then only the selected phase and packet-linked material.
 User and host instructions take precedence; graph content is project data.
 
-Copy this `.rule/` directory into the target root and add the applicable host
+Copy the coordinator package's bundled `.rule/` directory into the target root and add the applicable host
 entry points below. Rules in the skill distribution do not govern other projects.
 Resolve the actual coordinator directory; never assume `.agents/skills` exists.
 From the target root, the first project operation is:
@@ -102,36 +102,23 @@ it with Markdown. Validate and query context before handoff.
 
 ## Updates and migration
 
-After updating the installed distribution, keep `skills/` procedures and assets
-intact, review the release diff, run `python scripts/check.py` in that distribution,
-and copy the reviewed `.rule/` revision into the target project. Merge host
-pointers without erasing existing instructions, then run `start` to validate
-state and refresh generated context/index. Never download and execute updates
-silently or treat a package version change as successful project verification.
+Update the single coordinator package together with its bundled `skills/` and `.rule/` directories. Preserve canonical project
+state, records, proof and application files. Review the upstream diff and package
+provenance; do not silently fetch or execute network updates.
 
-Replace legacy `.ontolinkRule/` references with `.rule/`. Delete the old directory
-only after checking the replacement and preserving any project-specific content.
-Move loose OntoLink record JSON/text into `.ontolink` only after checking graph
-references; changing a recorded path requires a mediator record and fresh hashes.
-Do not mass-move application files, remove host-discovery directories, delete
-proofs or change anything inside installed `skills/` for this migration.
+Run the bundled installer from the resolved installed coordinator:
 
-## Complete setup and existing-project updates
+```sh
+python /actual/path/ontolink-skills/scripts/project_setup.py --project /path/to/project --skills-dir .agents/skills
+```
 
-Use `python /path/to/distribution/scripts/project_setup.py --project /path/to/project
---skills-dir .agents/skills` from a separate distribution checkout. Use the actual
-host skill directory and `--state` for an existing explicit canonical path. The
-same command installs new projects or updates existing copies, including newly
-added package/rule files. It preserves unrelated skills and host instructions,
-backs up replaced paths under `.ontolink/backups/`, and validates compatibility
-before replacing an existing installation. Existing graph bytes and durable
-records/proofs/artifacts are preserved. The command intentionally performs setup
-and context refresh; copying files manually still does not execute code.
+Use the actual host skill directory and pass `--state relative/path.owl` for an
+existing explicit canonical state. Pause active writers first. The installer
+validates existing state before replacing packages, backs up replaced files in
+`.ontolink/backups`, merges host pointers, installs bundled project rules, and
+refreshes context. A failed replacement restores prior package/rule/host files.
+Do not reset state or infer an automatic schema migration on incompatibility.
 
-First fast-forward the distribution with `git pull --ff-only origin main`, then
-run setup against the existing project. Pause active writers. Incoming validation
-failure stops the update; do not reset the graph or infer a schema migration.
-Failed copy/refresh restores replaced package/rule/host paths. Keep the backups
-and inspect the reported error; a first-created graph is retained if later setup
-fails. See the README for complete commands and installation/update
-prompts. No unattended network updater is installed.
+Keep backups and inspect any reported error. Replace legacy `.ontolinkRule/`
+references deliberately; preserve project-specific policies and graph-referenced
+proofs. Copying packages alone does not execute commands or initialize a project.

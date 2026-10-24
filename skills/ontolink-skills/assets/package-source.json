@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/asgmodel/ontolink-skills",
+  "commit": "3231c081fd8a5e7338dbab5410619665e13ca0fc",
+  "version": "1.3.0",
+  "layout": "One ontolink-skills package containing skills/<phase-name>/, .rule/, scripts/, references/ and assets/."
+}

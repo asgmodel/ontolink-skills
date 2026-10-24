@@ -12,43 +12,43 @@
     },
     {
       "name": "ontolink-discovery",
-      "path": "skills/ontolink-discovery",
+      "path": "skills/ontolink-skills/skills/ontolink-discovery",
       "role": "phase",
       "sequence": 1
     },
     {
       "name": "ontolink-architecture",
-      "path": "skills/ontolink-architecture",
+      "path": "skills/ontolink-skills/skills/ontolink-architecture",
       "role": "phase",
       "sequence": 2
     },
     {
       "name": "ontolink-planning",
-      "path": "skills/ontolink-planning",
+      "path": "skills/ontolink-skills/skills/ontolink-planning",
       "role": "phase",
       "sequence": 3
     },
     {
       "name": "ontolink-implementation",
-      "path": "skills/ontolink-implementation",
+      "path": "skills/ontolink-skills/skills/ontolink-implementation",
       "role": "phase",
       "sequence": 4
     },
     {
       "name": "ontolink-verification",
-      "path": "skills/ontolink-verification",
+      "path": "skills/ontolink-skills/skills/ontolink-verification",
       "role": "phase",
       "sequence": 5
     },
     {
       "name": "ontolink-delivery",
-      "path": "skills/ontolink-delivery",
+      "path": "skills/ontolink-skills/skills/ontolink-delivery",
       "role": "phase",
       "sequence": 6
     },
     {
       "name": "ontolink-monitoring",
-      "path": "skills/ontolink-monitoring",
+      "path": "skills/ontolink-skills/skills/ontolink-monitoring",
       "role": "phase",
       "sequence": 7
     }
@@ -62,12 +62,17 @@
     "retrieval": "local BM25 plus canonical graph-neighborhood signals"
   },
   "projectRules": {
-    "policy": ".rule/ONTOLOGY-FIRST.md",
-    "adapter": ".rule/ontolink.py",
+    "policy": "skills/ontolink-skills/.rule/ONTOLOGY-FIRST.md",
+    "adapter": "skills/ontolink-skills/.rule/ontolink.py",
     "generatedDirectory": ".ontolink",
     "canonicalState": "knowledge.owl",
     "refresh": "validate and query context after each successful adapter record",
     "setup": "scripts/project_setup.py",
-    "updates": "Run project_setup.py from the updated distribution; preserves existing canonical graph and durable project files"
-  }
+    "updates": "Update the single complete coordinator package, then run scripts/project_setup.py; existing canonical state and durable project files are preserved."
+  },
+  "package": "skills/ontolink-skills",
+  "installableSkills": [
+    "ontolink-skills"
+  ],
+  "layout": "One coordinator package with seven embedded phase skills under skills/ and bundled .rule/."
 }

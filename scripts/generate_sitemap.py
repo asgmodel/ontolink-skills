@@ -11,7 +11,7 @@ NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 
 
 def documented_paths(root=ROOT):
-    paths = [Path('README.md'), Path('.rule/ONTOLOGY-FIRST.md')]
+    paths = [Path('README.md')]
     paths += sorted(path.relative_to(root) for path in (root / 'docs').glob('*.md'))
     paths += sorted(path.relative_to(root) for path in (root / 'skills').rglob('*.md'))
     return sorted(set(paths), key=lambda path: path.as_posix())
