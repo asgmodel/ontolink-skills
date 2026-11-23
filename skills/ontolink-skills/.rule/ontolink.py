@@ -64,8 +64,8 @@ def session_lock(data: Path):
 def refresh(skill: Path, state: Path, data: Path, enable_index=False):
     """Compute fresh context in memory; never cache a second state copy."""
     validation = run(skill / 'scripts/mediator.py', 'validate', '--state', state)
-    if enable_index:
-        index = inside(data, 'index/project-index.json')
+    index = inside(data, 'index/project-index.json')
+    if enable_index or index.exists():
         run(skill / 'scripts/project_intelligence.py', 'index', '--root', state.parent,
             '--output', index)
     packet = run(skill / 'scripts/mediator.py', 'context', '--state', state)
@@ -86,11 +86,12 @@ def execute(args):
     with session_lock(data):
         if args.command == 'start':
             if args.state == 'knowledge.owl':
-                run(skill / 'scripts/mediator.py', 'bootstrap', '--root', root)
+                boot = run(skill / 'scripts/mediator.py', 'bootstrap', '--root', root)
+                return {'proposal': boot['proposal'], **refresh(skill, state, data, args.index)}
             return refresh(skill, state, data, args.index)
         if args.command == 'context':
             return refresh(skill, state, data)
-        if args.json is not None:
+        if getattr(args, 'json', None) is not None:
             payload = args.json
         else:
             source = inside(state.parent, args.input)
@@ -100,7 +101,11 @@ def execute(args):
             raise ValueError('Task record must be a JSON object')
         result = run(skill / 'scripts/mediator.py', 'record', '--state', state,
                      '--json', payload, '--expected-revision', args.expected_revision)
-        return {'record': result, **refresh(skill, state, data)}
+        try:
+            return {'record': result, **refresh(skill, state, data)}
+        except (ValueError, OSError) as error:
+            raise ValueError(f'Record COMMITTED at revision {result["revision"]}; refresh failed. '
+                             f'Do not resubmit; rerun context. {error}') from error
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
