@@ -124,7 +124,104 @@ def task_gate(graph, task, root):
     return errors
 
 
-def validate(graph, root, ontology):
+# Task detail lives in one file; the graph stores a small routing projection.
+TASK_DETAILS = {'files', 'proofs', 'artifacts', 'evidence', 'assessments',
+                'blockers', 'communication', 'contracts', 'decisions',
+                'recommendations', 'requirements', 'risks', 'testResults',
+                'warnings', 'actors', 'lastUpdate'}
+TASK_LIMIT = 8
+
+
+def task_document(graph, node, revision, previous=None, detail=None):
+    """Build one compact JSON record with each relationship represented once."""
+    properties, relationships = {}, {}
+    for subject, predicate, value, resource in sorted(graph.triples):
+        if subject != node or predicate == TYPE:
+            continue
+        key = predicate.removeprefix(O)
+        if key in {'taskRecord', 'taskRecordHash', 'updatedAt', 'createdAt'}:
+            continue
+        if resource and key != 'phase':
+            relationships.setdefault(key, []).append(value)
+        else:
+            properties.setdefault(key, []).append(value)
+    properties = {key: (values[0] if len(values) == 1 else values)
+                  for key, values in sorted(properties.items())}
+    relationships = {key: sorted(set(values))
+                     for key, values in sorted(relationships.items())}
+    payload = {'formatVersion': 3, 'id': short(node), 'type': 'Task',
+               'uri': node, 'revision': revision, 'updatedAt': stamp(),
+               'properties': properties, 'relationships': relationships}
+    for key in sorted(TASK_DETAILS):
+        value = (detail or {}).get(key, (previous or {}).get(key))
+        if value is None or value == [] or value == '':
+            continue
+        if key == 'lastUpdate':
+            if not isinstance(value, (str, dict)):
+                raise ValueError('lastUpdate must be a string or object')
+        else:
+            if not isinstance(value, list):
+                raise ValueError('Task detail must be an array: ' + key)
+            unique = {}
+            for item in value:
+                token = json.dumps(item, sort_keys=True, ensure_ascii=False)
+                unique[token] = item
+            value = list(unique.values())
+        payload[key] = value
+    return payload
+
+
+def task_path(root, node):
+    name = short(node)
+    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,79}', name):
+        raise ValueError('Invalid task record ID')
+    folder = root / '.ontolink' / 'tasks'
+    target = folder / (name + '.json')
+    if folder.is_symlink() or target.is_symlink():
+        raise ValueError('Task record symlinks are unsupported')
+    return target
+
+
+def save_task_document(graph, node, root, revision, detail=None):
+    path = task_path(root, node)
+    old = json.loads(path.read_text(encoding='utf-8')) if path.exists() else None
+    if old is not None and (old.get('id') != short(node) or old.get('type') != 'Task'):
+        raise ValueError('Existing task JSON identity conflicts with graph')
+    document = task_document(graph, node, revision, old, detail)
+    content = (json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + '\n').encode('utf-8')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.task-', suffix='.json', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(content)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    graph.set(node, O + 'taskRecord', '.ontolink/tasks/' + short(node) + '.json')
+    graph.set(node, O + 'taskRecordHash', hashlib.sha256(content).hexdigest())
+    graph.set(node, O + 'updatedAt', document['updatedAt'])
+
+
+def project_scale(root):
+    """Choose task scaffolding from the real source footprint."""
+    excluded = {'.git', '.ontolink', '.agents', 'node_modules', '.venv',
+                'venv', '__pycache__', 'dist', 'build', 'bin', 'obj'}
+    count = 0
+    for path in root.rglob('*'):
+        if set(path.relative_to(root).parts) & excluded or not path.is_file():
+            continue
+        count += 1
+        if count > 200:
+            break
+    scale = 'small' if count <= 25 else 'medium' if count <= 200 else 'large'
+    return {'scale': scale, 'sourceFilesInspected': count,
+            'strategy': '1 starter task' if scale == 'small' else
+                        '3 starter tasks' if scale == 'medium' else '7 phase tasks'}
+
+
+def validate(graph, root, ontology, check_task_records=True):
     p = project(graph)
     revision = int(graph.one(p, O + 'revision'))
     if revision < 0:
@@ -145,6 +242,30 @@ def validate(graph, root, ontology):
     phase_map = {item['id']: item for item in phases(ontology)}
     phase_ids = set(phase_map)
     for task in graph.typed('Task'):
+        record = graph.one(task, O + 'taskRecord')
+        if check_task_records and record is not None:
+            expected = '.ontolink/tasks/' + short(task) + '.json'
+            if record != expected or not HASH.fullmatch(graph.one(task, O + 'taskRecordHash', '')):
+                raise ValueError('Task JSON reference or hash is invalid')
+            path = task_path(root, task)
+            if not path.is_file() or sha(path) != graph.one(task, O + 'taskRecordHash'):
+                raise ValueError('Task JSON missing or changed: ' + short(task))
+            document = json.loads(path.read_text(encoding='utf-8'))
+            if document.get('id') != short(task) or document.get('uri') != task:
+                raise ValueError('Task JSON identity mismatch')
+            relations = document.get('relationships', {})
+            props = document.get('properties', {})
+            if set(relations) & set(props):
+                raise ValueError('Duplicate task relations across JSON sections')
+            for key, values in relations.items():
+                if not isinstance(values, list) or len(values) != len(set(values)):
+                    raise ValueError('Repeated task relation: ' + key)
+                if sorted(values) != sorted(graph.values(task, O + key)):
+                    raise ValueError('Task JSON graph relation mismatch: ' + key)
+            for key in ('status', 'title', 'phase', 'owner'):
+                actual = graph.one(task, O + key)
+                if key in props and props[key] != actual:
+                    raise ValueError('Task JSON graph property mismatch: ' + key)
         if graph.one(task, O + 'status') not in STATUSES or graph.one(task, O + 'phase') not in phase_ids:
             raise ValueError('Invalid task status or phase')
         if not graph.one(task, O + 'owner') or not graph.one(task, O + 'title') or not graph.values(task, O + 'requiredKind'):
@@ -157,7 +278,7 @@ def validate(graph, root, ontology):
                 if earlier['order'] >= phase_map[phase]['order']:
                     break
                 earlier_tasks = [t for t in graph.typed('Task') if graph.one(t, O + 'phase') == earlier['id']]
-                if not earlier_tasks or any(graph.one(t, O + 'status') != 'DONE' for t in earlier_tasks):
+                if earlier_tasks and any(graph.one(t, O + 'status') != 'DONE' for t in earlier_tasks):
                     raise ValueError('Earlier phase is incomplete: ' + earlier['id'])
         weight = float(graph.one(task, O + 'weight', '1'))
         if not math.isfinite(weight) or weight <= 0:
@@ -242,7 +363,7 @@ def reconcile(graph, ontology):
 
 def apply_record(graph, record, root, ontology):
     allowed = {'id', 'type', 'phase'} | LISTS | LITERALS
-    if not isinstance(record, dict) or set(record) - allowed or record.get('type') not in TYPES:
+    if not isinstance(record, dict) or record.get('type') not in TYPES - {'Event'} or set(record) - (allowed | (TASK_DETAILS if record.get('type') == 'Task' else set())):
         raise ValueError('Unknown record type or fields')
     node = identifier(graph, record.get('id'))
     previous_triples = {t for t in graph.triples if t[0] == node}
@@ -253,7 +374,7 @@ def apply_record(graph, record, root, ontology):
     graph.set(node, TYPE, O + record['type'], True)
     graph.set(node, O + 'belongsTo', project(graph), True)
     for key, value in record.items():
-        if key in {'id', 'type'}:
+        if key in {'id', 'type'} or key in TASK_DETAILS:
             continue
         predicate = O + key
         graph.triples = {t for t in graph.triples if t[:2] != (node, predicate)}
@@ -294,7 +415,7 @@ def apply_record(graph, record, root, ontology):
                     if graph.has_type(dep, 'Task'):
                         graph.set(dep, O + 'status', 'TODO')
     reconcile(graph, ontology)
-    validate(graph, root, ontology)
+    validate(graph, root, ontology, check_task_records=False)
     return node
 
 
@@ -317,18 +438,22 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
             key = pred.removeprefix(O)
             data.setdefault(key, []).append(short(value) if resource and value.startswith(project(graph) + '/') else value)
         return data
-    packet = {'project': graph.one(project(graph), O + 'title'), 'revision': int(graph.one(project(graph), O + 'revision')), 'progress': {'completed_weight': done, 'total_weight': total, 'percent': round(100 * done / total, 2) if total else None, 'definition': 'Evidence-gated DONE task weights / all task weights; not confidence or likelihood'}, 'active_task': node_data(selected) if selected else None, 'workflow_skill': None, 'engineering_candidates': [], 'context': [], 'evidence': [], 'uncertainty': [], 'warnings': [], 'blockers': [], 'recommendations': [], 'communication': [], 'task_index': [{'id': short(t), 'phase': graph.one(t, O + 'phase').removeprefix(O), 'status': graph.one(t, O + 'status'), 'owner': graph.one(t, O + 'owner')} for t in tasks], 'routing_graph_hash': hashlib.sha256(json.dumps(sorted(ontology.triples)).encode()).hexdigest()}
+    packet = {'project': graph.one(project(graph), O + 'title'), 'revision': int(graph.one(project(graph), O + 'revision')), 'progress': {'completed_weight': done, 'total_weight': total, 'percent': round(100 * done / total, 2) if total else None, 'definition': 'Evidence-gated DONE task weights / all task weights; not confidence or likelihood'}, 'active_task': node_data(selected) if selected else None, 'workflow_skill': None, 'engineering_candidates': [], 'context': [], 'evidence': [], 'uncertainty': [], 'warnings': [], 'blockers': [], 'recommendations': [], 'communication': [], 'task_index': [{'id': short(t), 'phase': graph.one(t, O + 'phase').removeprefix(O), 'status': graph.one(t, O + 'status')} for t in tasks[:TASK_LIMIT]], 'task_count': len(tasks), 'task_index_remaining': max(0, len(tasks) - TASK_LIMIT)}
     relevant = {project(graph)}
     if selected:
         relevant.add(selected)
-        queue = [selected]
-        while queue:
-            node = queue.pop()
-            for pred in ['dependsOn', 'usesArtifact', 'derivedFrom']:
-                for dep in graph.values(node, O + pred):
-                    if dep not in relevant:
-                        relevant.add(dep); queue.append(dep)
+        # Bound context to direct dependencies and their accepted artifacts.
+        for pred in ['dependsOn', 'usesArtifact', 'derivedFrom']:
+            relevant.update(graph.values(selected, O + pred))
+        for predecessor in list(relevant):
+            if graph.has_type(predecessor, 'Task'):
+                relevant.update(graph.values(predecessor, O + 'usesArtifact'))
         phase = next(p for p in phases(ontology) if p['id'] == graph.one(selected, O + 'phase'))
+        record = graph.one(selected, O + 'taskRecord')
+        if record:
+            details = json.loads(task_path(root, selected).read_text(encoding='utf-8'))
+            packet['active_task']['last_update'] = details.get('lastUpdate', details['updatedAt'])
+            packet['active_task']['record_path'] = record
         packet['workflow_skill'] = phase['skill']
         packet['engineering_candidates'] = phase['engineering']
         packet['context'] = [node_data(n) for n in sorted(relevant - {selected, project(graph)})]
@@ -351,15 +476,22 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
     return packet
 
 
-def initialize(name, title, output, ontology):
+def initialize(name, title, output, ontology, scale='large', create_records=False):
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,63}', name):
         raise ValueError('Project ID must use lowercase hyphen-case')
     if output.exists():
         raise ValueError('Refuse to overwrite existing project state')
     graph = Store(); p = O + 'project:' + name
     graph.add(p, TYPE, O + 'Project', True); graph.add(p, O + 'title', title); graph.add(p, O + 'revision', 0)
+    if scale not in {'small', 'medium', 'large'}:
+        raise ValueError('Scale must be small, medium or large')
+    selected = phases(ontology)
+    if scale == 'small':
+        selected = selected[:1]
+    elif scale == 'medium':
+        selected = [p for p in selected if p['id'] in {O + 'discover', O + 'build', O + 'verify'}]
     previous = None
-    for phase in phases(ontology):
+    for phase in selected:
         phase_name = phase['id'].removeprefix(O)
         task = p + '/task-' + phase_name
         graph.add(task, TYPE, O + 'Task', True); graph.add(task, O + 'phase', phase['id'], True); graph.add(task, O + 'belongsTo', p, True)
@@ -371,7 +503,12 @@ def initialize(name, title, output, ontology):
             graph.add(task, O + 'dependsOn', previous, True)
         previous = task
     output.parent.mkdir(parents=True, exist_ok=True)
-    validate(graph, output.parent, ontology); graph.write(output)
+    validate(graph, output.parent, ontology)
+    if create_records:
+        for task in graph.typed('Task'):
+            save_task_document(graph, task, output.parent, 0)
+        validate(graph, output.parent, ontology)
+    graph.write(output)
     return graph
 
 
@@ -388,16 +525,17 @@ def bootstrap(root, ontology, name=None, title=None):
     try:
         os.close(fd)
         created = not path.exists()
+        proposal = project_scale(root) if created else {'scale': 'existing', 'strategy': 'Preserve established tasks'}
         if created:
             inferred = re.sub(r'[^a-z0-9]+', '-', root.name.lower()).strip('-')[:64] or 'project'
-            graph = initialize(name or inferred, title or root.name, path, ontology)
+            graph = initialize(name or inferred, title or root.name, path, ontology, scale=proposal['scale'], create_records=True)
         else:
             try:
                 graph = Store.read(path)
             except ParseError as error:
                 raise ValueError('Invalid canonical RDF/XML state; preserve and repair it') from error
             validate(graph, root, ontology)
-        return {'state': str(path), 'created': created, 'context': snapshot(graph, ontology, root)}
+        return {'state': str(path), 'created': created, 'proposal': proposal, 'context': snapshot(graph, ontology, root)}
     finally:
         lock.unlink(missing_ok=True)
 
@@ -416,14 +554,66 @@ def update_file(path, record, expected, ontology):
         updated = copy.deepcopy(graph)
         node = apply_record(updated, record, path.parent, ontology)
         updated.set(p, O + 'revision', actual + 1)
-        event = p + '/event-' + str(actual + 1)
-        updated.add(event, TYPE, O + 'Event', True); updated.add(event, O + 'affects', node, True)
-        updated.add(event, O + 'belongsTo', p, True)
-        updated.add(event, O + 'action', 'record-upsert'); updated.add(event, O + 'createdAt', stamp())
-        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='ontolink-', suffix='.owl', delete=False) as tmp:
-            temporary = Path(tmp.name)
-        updated.write(temporary); os.replace(temporary, path)
-        return {'revision': actual + 1, 'recorded': short(node), 'invalidated': [short(a) for a in updated.typed('Artifact') if updated.one(a, O + 'status') == 'STALE']}
+        # Store only latest task updates; do not append Event nodes or receipts.
+        excluded = {O + 'taskRecord', O + 'taskRecordHash', O + 'updatedAt'}
+        def state_of(g, task):
+            return {triple for triple in g.triples
+                    if triple[0] == task and triple[1] not in excluded}
+        related = {node} | set(updated.values(node, O + 'supports'))
+        related |= set(updated.values(node, O + 'affects'))
+        related |= set(updated.values(node, O + 'assesses'))
+        related |= set(updated.values(node, O + 'target'))
+        touching = reachable(updated, related) | related
+        affected = [task for task in updated.typed('Task')
+                    if (record['type'] == 'Task' and task == node)
+                    or state_of(updated, task) != state_of(graph, task)
+                    or task in touching]
+        backups = {task_path(path.parent, task):
+                   (task_path(path.parent, task).read_bytes()
+                    if task_path(path.parent, task).exists() else None)
+                   for task in affected}
+        # The old auto-generated Event nodes are retired only when nobody references them.
+        legacy_events = set()
+        for event in updated.typed('Event'):
+            if (re.fullmatch(r'.*/event-[0-9]+', event)
+                    and updated.one(event, O + 'action') == 'record-upsert'
+                    and not any(resource and value == event
+                                for subject, predicate, value, resource in updated.triples)):
+                legacy_events.add(event)
+        if legacy_events:
+            updated.triples = {triple for triple in updated.triples
+                               if triple[0] not in legacy_events}
+        archive = None
+        try:
+            for task in affected:
+                save_task_document(updated, task, path.parent, actual + 1,
+                                   record if task == node and record['type'] == 'Task' else None)
+            validate(updated, path.parent, ontology)
+            # A checkpoint is preserved before compaction or at bounded large revisions.
+            if legacy_events or (path.stat().st_size > 150_000 and actual % 50 == 0):
+                archive_dir = path.parent / '.ontolink' / 'archive'
+                if archive_dir.is_symlink():
+                    raise ValueError('Archive directory cannot be a symlink')
+                archive_dir.mkdir(parents=True, exist_ok=True)
+                archive = archive_dir / ('knowledge-revision-' + str(actual) + '.owl')
+                with archive.open('xb') as stream:
+                    stream.write(path.read_bytes())
+            with tempfile.NamedTemporaryFile(dir=path.parent, prefix='ontolink-', suffix='.owl', delete=False) as tmp:
+                temporary = Path(tmp.name)
+            updated.write(temporary)
+            os.replace(temporary, path)
+        except Exception:
+            for record_path, original in backups.items():
+                if original is None:
+                    record_path.unlink(missing_ok=True)
+                else:
+                    record_path.write_bytes(original)
+            raise
+        return {'revision': actual + 1, 'recorded': short(node),
+                'task_records_updated': len(affected),
+                'archive': str(archive.relative_to(path.parent)) if archive else None,
+                'invalidated': [short(a) for a in updated.typed('Artifact')
+                                if updated.one(a, O + 'status') == 'STALE']}
     finally:
         if temporary and temporary.exists():
             temporary.unlink()
@@ -437,21 +627,24 @@ def main():
     boot = sub.add_parser('bootstrap', help='Create or reuse knowledge.owl at the project root')
     boot.add_argument('--root', type=Path, default=Path.cwd())
     boot.add_argument('--project'); boot.add_argument('--title')
-    init = sub.add_parser('init'); init.add_argument('--project', required=True); init.add_argument('--title', required=True); init.add_argument('--output', type=Path, required=True)
+    init = sub.add_parser('init'); init.add_argument('--project', required=True); init.add_argument('--title', required=True); init.add_argument('--output', type=Path, required=True); init.add_argument('--scale', choices=['small', 'medium', 'large'], default='small')
     for command in ['validate', 'context', 'record']:
         child = sub.add_parser(command); child.add_argument('--state', type=Path, required=True)
         if command == 'context':
             child.add_argument('--task'); child.add_argument('--budget', type=int, default=4000)
         if command == 'record':
-            child.add_argument('--input', type=Path, required=True); child.add_argument('--expected-revision', type=int, required=True)
+            source = child.add_mutually_exclusive_group(required=True)
+            source.add_argument('--input', type=Path)
+            source.add_argument('--json', help='Inline JSON avoids extra payload files')
+            child.add_argument('--expected-revision', type=int, required=True)
     args = parser.parse_args(); ontology = Store.read(args.ontology)
     try:
         if args.command == 'bootstrap':
             result = bootstrap(args.root, ontology, args.project, args.title)
         elif args.command == 'init':
-            g = initialize(args.project, args.title, args.output, ontology); result = snapshot(g, ontology, args.output.parent)
+            g = initialize(args.project, args.title, args.output, ontology, scale=args.scale, create_records=True); result = snapshot(g, ontology, args.output.parent)
         elif args.command == 'record':
-            result = update_file(args.state, json.loads(args.input.read_text()), args.expected_revision, ontology)
+            result = update_file(args.state, json.loads(args.json if args.json is not None else args.input.read_text(encoding='utf-8')), args.expected_revision, ontology)
         else:
             graph = Store.read(args.state)
             if args.command == 'validate':

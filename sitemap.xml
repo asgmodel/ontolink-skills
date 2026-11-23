@@ -4,24 +4,6 @@
     <loc>https://github.com/asgmodel/ontolink-skills</loc>
   </url>
   <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/docs/knowledge-model.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/docs/lifecycle.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/docs/maintenance.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/docs/project-intelligence.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/docs/quickstart.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/docs/validation.md</loc>
-  </url>
-  <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/.rule/ONTOLOGY-FIRST.md</loc>
   </url>
   <url>
@@ -58,42 +40,21 @@
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-architecture/SKILL.md</loc>
   </url>
   <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-architecture/references/phase-contract.md</loc>
-  </url>
-  <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-delivery/SKILL.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-delivery/references/phase-contract.md</loc>
   </url>
   <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-discovery/SKILL.md</loc>
   </url>
   <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-discovery/references/phase-contract.md</loc>
-  </url>
-  <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-implementation/SKILL.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-implementation/references/phase-contract.md</loc>
   </url>
   <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-monitoring/SKILL.md</loc>
   </url>
   <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-monitoring/references/phase-contract.md</loc>
-  </url>
-  <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-planning/SKILL.md</loc>
   </url>
   <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-planning/references/phase-contract.md</loc>
-  </url>
-  <url>
     <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-verification/SKILL.md</loc>
-  </url>
-  <url>
-    <loc>https://github.com/asgmodel/ontolink-skills/blob/main/skills/ontolink-skills/skills/ontolink-verification/references/phase-contract.md</loc>
   </url>
 </urlset>

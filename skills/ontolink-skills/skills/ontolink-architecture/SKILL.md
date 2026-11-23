@@ -1,17 +1,14 @@
 ---
 name: ontolink-architecture
-description: Execute the design phase of an OntoLink project using the ontology-mediated state and compact context. Use for OntoLink architecture, the ontolink-architecture workflow, or when the OntoLink mediator routes a task to this phase.
+description: Architecture phase procedure for ontology-mediated OntoLink tasks.
 ---
 
-# OntoLink Architecture
+# Architecture
 
-Resolve the bundled `ontolink-skills` coordinator at `../..` relative to this phase folder; read its [SKILL.md](../../SKILL.md). Read its execution contract and run its mediator against the real project state. Do not rely on platform-generated folder IDs or copy a second ontology into this skill.
+Load only this phase and the focused context returned by the [coordinator](../../SKILL.md). Follow the existing `knowledge.owl` state; never bootstrap a second graph.
 
-Before phase work, apply the coordinator's mandatory project bootstrap: create or reuse `knowledge.owl` at the actual project root without requiring a separate user request. Preserve any explicitly configured canonical state path.
+**Phase:** `design`. **Required outcome kind:** `contracts`.
 
-1. Read the current context packet for the selected task. Confirm its phase is `design` and its prerequisites are satisfied before execution. For monitoring during an earlier phase, inspect read-only state and report the actual active phase; do not bypass phase closure guards.
-2. Inspect current architecture; connect requirements to domain boundaries, API/data contracts and decisions. Preserve the native stack and current approved design.
-3. Read [phase-contract.md](references/phase-contract.md). Apply the relevant original engineering skill instructions and actual project capabilities; never claim that reading their names executes them.
-4. Record factual knowledge, artifacts and proof through the mediator with the observed revision. Keep communications, warnings, blockers, confidence and likelihood distinct. Load uncertainty guidance before making an assessment.
-5. Preserve the required outcome kind `contracts`. Mark DONE only after current evidence and the actual phase outcomes are established. A blocker, missing tool or unknown external prerequisite remains explicit.
-6. Generate a fresh compact packet for the next eligible phase. Do not load all phase skills, duplicate the user's project, fabricate test results or transmit messages solely because the graph recommends them.
+Define architecture and interfaces from verified requirements. Identify tradeoffs and security constraints; do not rewrite the project stack without reason.
+
+Use `mediator.py context --task <id>` to check current dependencies and blockers. Update the existing single task JSON through `record --json` with the observed revision. Attach only relevant source/proof references and the **latest** update. Preserve real evidence and dependencies; mark DONE only after current PASS proof and all prerequisites. Query context again before handing off.
