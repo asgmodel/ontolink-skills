@@ -442,9 +442,12 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
     relevant = {project(graph)}
     if selected:
         relevant.add(selected)
-        # One-hop relevance avoids loading entire dependency chains into prompts.
+        # Bound context to direct dependencies and their accepted artifacts.
         for pred in ['dependsOn', 'usesArtifact', 'derivedFrom']:
             relevant.update(graph.values(selected, O + pred))
+        for predecessor in list(relevant):
+            if graph.has_type(predecessor, 'Task'):
+                relevant.update(graph.values(predecessor, O + 'usesArtifact'))
         phase = next(p for p in phases(ontology) if p['id'] == graph.one(selected, O + 'phase'))
         record = graph.one(selected, O + 'taskRecord')
         if record:
