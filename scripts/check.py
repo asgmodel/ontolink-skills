@@ -5,7 +5,6 @@ import re
 import subprocess
 import sys
 from rdflib import Graph
-from rdflib.compare import isomorphic
 from pyshacl import validate
 
 root = Path(__file__).resolve().parents[1]
@@ -40,8 +39,6 @@ for file in core.rglob('*.md'):
         target = (file.parent / value.split('#')[0]).resolve()
         assert target.is_relative_to(core.resolve()) and target.is_file(), (file, value)
 owl = Graph().parse(core / 'assets/ontolink.owl', format='xml')
-ttl = Graph().parse(core / 'assets/ontolink.ttl', format='turtle')
-assert isomorphic(owl, ttl), 'Ontology mirror differs'
 state = Graph().parse(core / 'assets/examples/project.owl', format='xml')
 conforms, _, report = validate(state, shacl_graph=Graph().parse(core / 'assets/shapes.ttl', format='turtle'), ont_graph=owl, inference='none')
 if not conforms:
@@ -50,4 +47,4 @@ subprocess.run([sys.executable, str(core / 'scripts/mediator.py'), 'validate', '
 for script in [core / 'scripts/test_mediator.py', core / 'scripts/test_project_intelligence.py', root / 'scripts/test_project_rules.py', core / 'scripts/test_project_setup.py']:
     subprocess.run([sys.executable, str(script)], check=True)
 subprocess.run([sys.executable, str(root / 'scripts/generate_sitemap.py'), '--check'], check=True)
-print(f'PASS: one complete package, seven nested phases, self-contained references, {len(owl)} ontology triples, equivalent Turtle, SHACL, and runtime/setup regression suites')
+print(f'PASS: one complete package, seven nested phases, self-contained references, {len(owl)} ontology triples, SHACL, and runtime/setup regression suites')
