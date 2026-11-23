@@ -205,6 +205,23 @@ class MediatorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate(Store.read(state), target, self.ontology)
 
+    def test_new_events_are_rejected_and_legacy_events_archived(self):
+        with self.assertRaises(ValueError):
+            self.record({'id': 'new-event', 'type': 'Event', 'action': 'record-upsert'})
+        graph = Store.read(self.state)
+        project = graph.typed('Project')[0]
+        event = project + '/event-1'
+        graph.add(event, TYPE, O + 'Event', True)
+        graph.add(event, O + 'belongsTo', project, True)
+        graph.add(event, O + 'affects', project + '/task-discover', True)
+        graph.add(event, O + 'action', 'record-upsert')
+        graph.write(self.state)
+        result = update_file(self.state, self.assessment(), 0, self.ontology)
+        self.assertEqual(len(Store.read(self.state).typed('Event')), 0)
+        self.assertTrue((self.root / result['archive']).is_file())
+        self.assertEqual(len(Store.read(self.root / result['archive']).typed('Event')), 1)
+        validate(Store.read(self.state), self.root, self.ontology)
+
     def test_existing_lock_prevents_lost_update(self):
         lock = self.state.with_suffix('.owl.lock'); lock.write_text('Synthetic active writer')
         with self.assertRaises(FileExistsError):
