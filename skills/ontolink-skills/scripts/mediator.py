@@ -242,6 +242,30 @@ def validate(graph, root, ontology):
     phase_map = {item['id']: item for item in phases(ontology)}
     phase_ids = set(phase_map)
     for task in graph.typed('Task'):
+        record = graph.one(task, O + 'taskRecord')
+        if record is not None:
+            expected = '.ontolink/tasks/' + short(task) + '.json'
+            if record != expected or not HASH.fullmatch(graph.one(task, O + 'taskRecordHash', '')):
+                raise ValueError('Task JSON reference or hash is invalid')
+            path = task_path(root, task)
+            if not path.is_file() or sha(path) != graph.one(task, O + 'taskRecordHash'):
+                raise ValueError('Task JSON missing or changed: ' + short(task))
+            document = json.loads(path.read_text(encoding='utf-8'))
+            if document.get('id') != short(task) or document.get('uri') != task:
+                raise ValueError('Task JSON identity mismatch')
+            relations = document.get('relationships', {})
+            props = document.get('properties', {})
+            if set(relations) & set(props):
+                raise ValueError('Duplicate task relations across JSON sections')
+            for key, values in relations.items():
+                if not isinstance(values, list) or len(values) != len(set(values)):
+                    raise ValueError('Repeated task relation: ' + key)
+                if sorted(values) != sorted(graph.values(task, O + key)):
+                    raise ValueError('Task JSON graph relation mismatch: ' + key)
+            for key in ('status', 'title', 'phase', 'owner'):
+                actual = graph.one(task, O + key)
+                if key in props and props[key] != actual:
+                    raise ValueError('Task JSON graph property mismatch: ' + key)
         if graph.one(task, O + 'status') not in STATUSES or graph.one(task, O + 'phase') not in phase_ids:
             raise ValueError('Invalid task status or phase')
         if not graph.one(task, O + 'owner') or not graph.one(task, O + 'title') or not graph.values(task, O + 'requiredKind'):
@@ -254,7 +278,7 @@ def validate(graph, root, ontology):
                 if earlier['order'] >= phase_map[phase]['order']:
                     break
                 earlier_tasks = [t for t in graph.typed('Task') if graph.one(t, O + 'phase') == earlier['id']]
-                if not earlier_tasks or any(graph.one(t, O + 'status') != 'DONE' for t in earlier_tasks):
+                if earlier_tasks and any(graph.one(t, O + 'status') != 'DONE' for t in earlier_tasks):
                     raise ValueError('Earlier phase is incomplete: ' + earlier['id'])
         weight = float(graph.one(task, O + 'weight', '1'))
         if not math.isfinite(weight) or weight <= 0:
@@ -339,7 +363,7 @@ def reconcile(graph, ontology):
 
 def apply_record(graph, record, root, ontology):
     allowed = {'id', 'type', 'phase'} | LISTS | LITERALS
-    if not isinstance(record, dict) or set(record) - allowed or record.get('type') not in TYPES:
+    if not isinstance(record, dict) or record.get('type') not in TYPES or set(record) - (allowed | (TASK_DETAILS if record.get('type') == 'Task' else set())):
         raise ValueError('Unknown record type or fields')
     node = identifier(graph, record.get('id'))
     previous_triples = {t for t in graph.triples if t[0] == node}
@@ -350,7 +374,7 @@ def apply_record(graph, record, root, ontology):
     graph.set(node, TYPE, O + record['type'], True)
     graph.set(node, O + 'belongsTo', project(graph), True)
     for key, value in record.items():
-        if key in {'id', 'type'}:
+        if key in {'id', 'type'} or key in TASK_DETAILS:
             continue
         predicate = O + key
         graph.triples = {t for t in graph.triples if t[:2] != (node, predicate)}
@@ -414,7 +438,7 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
             key = pred.removeprefix(O)
             data.setdefault(key, []).append(short(value) if resource and value.startswith(project(graph) + '/') else value)
         return data
-    packet = {'project': graph.one(project(graph), O + 'title'), 'revision': int(graph.one(project(graph), O + 'revision')), 'progress': {'completed_weight': done, 'total_weight': total, 'percent': round(100 * done / total, 2) if total else None, 'definition': 'Evidence-gated DONE task weights / all task weights; not confidence or likelihood'}, 'active_task': node_data(selected) if selected else None, 'workflow_skill': None, 'engineering_candidates': [], 'context': [], 'evidence': [], 'uncertainty': [], 'warnings': [], 'blockers': [], 'recommendations': [], 'communication': [], 'task_index': [{'id': short(t), 'phase': graph.one(t, O + 'phase').removeprefix(O), 'status': graph.one(t, O + 'status'), 'owner': graph.one(t, O + 'owner')} for t in tasks], 'routing_graph_hash': hashlib.sha256(json.dumps(sorted(ontology.triples)).encode()).hexdigest()}
+    packet = {'project': graph.one(project(graph), O + 'title'), 'revision': int(graph.one(project(graph), O + 'revision')), 'progress': {'completed_weight': done, 'total_weight': total, 'percent': round(100 * done / total, 2) if total else None, 'definition': 'Evidence-gated DONE task weights / all task weights; not confidence or likelihood'}, 'active_task': node_data(selected) if selected else None, 'workflow_skill': None, 'engineering_candidates': [], 'context': [], 'evidence': [], 'uncertainty': [], 'warnings': [], 'blockers': [], 'recommendations': [], 'communication': [], 'task_index': [{'id': short(t), 'phase': graph.one(t, O + 'phase').removeprefix(O), 'status': graph.one(t, O + 'status')} for t in tasks[:TASK_LIMIT]], 'task_count': len(tasks), 'task_index_remaining': max(0, len(tasks) - TASK_LIMIT)}
     relevant = {project(graph)}
     if selected:
         relevant.add(selected)
@@ -426,6 +450,11 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
                     if dep not in relevant:
                         relevant.add(dep); queue.append(dep)
         phase = next(p for p in phases(ontology) if p['id'] == graph.one(selected, O + 'phase'))
+        record = graph.one(selected, O + 'taskRecord')
+        if record:
+            details = json.loads(task_path(root, selected).read_text(encoding='utf-8'))
+            packet['active_task']['last_update'] = details.get('lastUpdate', details['updatedAt'])
+            packet['active_task']['record_path'] = record
         packet['workflow_skill'] = phase['skill']
         packet['engineering_candidates'] = phase['engineering']
         packet['context'] = [node_data(n) for n in sorted(relevant - {selected, project(graph)})]
@@ -448,15 +477,22 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
     return packet
 
 
-def initialize(name, title, output, ontology):
+def initialize(name, title, output, ontology, scale='large', create_records=False):
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,63}', name):
         raise ValueError('Project ID must use lowercase hyphen-case')
     if output.exists():
         raise ValueError('Refuse to overwrite existing project state')
     graph = Store(); p = O + 'project:' + name
     graph.add(p, TYPE, O + 'Project', True); graph.add(p, O + 'title', title); graph.add(p, O + 'revision', 0)
+    if scale not in {'small', 'medium', 'large'}:
+        raise ValueError('Scale must be small, medium or large')
+    selected = phases(ontology)
+    if scale == 'small':
+        selected = selected[:1]
+    elif scale == 'medium':
+        selected = [p for p in selected if p['id'] in {O + 'discover', O + 'build', O + 'verify'}]
     previous = None
-    for phase in phases(ontology):
+    for phase in selected:
         phase_name = phase['id'].removeprefix(O)
         task = p + '/task-' + phase_name
         graph.add(task, TYPE, O + 'Task', True); graph.add(task, O + 'phase', phase['id'], True); graph.add(task, O + 'belongsTo', p, True)
@@ -468,7 +504,12 @@ def initialize(name, title, output, ontology):
             graph.add(task, O + 'dependsOn', previous, True)
         previous = task
     output.parent.mkdir(parents=True, exist_ok=True)
-    validate(graph, output.parent, ontology); graph.write(output)
+    validate(graph, output.parent, ontology)
+    if create_records:
+        for task in graph.typed('Task'):
+            save_task_document(graph, task, output.parent, 0)
+        validate(graph, output.parent, ontology)
+    graph.write(output)
     return graph
 
 
@@ -485,16 +526,17 @@ def bootstrap(root, ontology, name=None, title=None):
     try:
         os.close(fd)
         created = not path.exists()
+        proposal = project_scale(root)
         if created:
             inferred = re.sub(r'[^a-z0-9]+', '-', root.name.lower()).strip('-')[:64] or 'project'
-            graph = initialize(name or inferred, title or root.name, path, ontology)
+            graph = initialize(name or inferred, title or root.name, path, ontology, scale=proposal['scale'], create_records=True)
         else:
             try:
                 graph = Store.read(path)
             except ParseError as error:
                 raise ValueError('Invalid canonical RDF/XML state; preserve and repair it') from error
             validate(graph, root, ontology)
-        return {'state': str(path), 'created': created, 'context': snapshot(graph, ontology, root)}
+        return {'state': str(path), 'created': created, 'proposal': proposal, 'context': snapshot(graph, ontology, root)}
     finally:
         lock.unlink(missing_ok=True)
 
