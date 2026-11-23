@@ -129,7 +129,7 @@ TASK_DETAILS = {'files', 'proofs', 'artifacts', 'evidence', 'assessments',
                 'blockers', 'communication', 'contracts', 'decisions',
                 'recommendations', 'requirements', 'risks', 'testResults',
                 'warnings', 'actors', 'lastUpdate'}
-TASK_LIMIT = 12
+TASK_LIMIT = 8
 
 
 def task_document(graph, node, revision, previous=None, detail=None):
@@ -442,13 +442,9 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
     relevant = {project(graph)}
     if selected:
         relevant.add(selected)
-        queue = [selected]
-        while queue:
-            node = queue.pop()
-            for pred in ['dependsOn', 'usesArtifact', 'derivedFrom']:
-                for dep in graph.values(node, O + pred):
-                    if dep not in relevant:
-                        relevant.add(dep); queue.append(dep)
+        # One-hop relevance avoids loading entire dependency chains into prompts.
+        for pred in ['dependsOn', 'usesArtifact', 'derivedFrom']:
+            relevant.update(graph.values(selected, O + pred))
         phase = next(p for p in phases(ontology) if p['id'] == graph.one(selected, O + 'phase'))
         record = graph.one(selected, O + 'taskRecord')
         if record:
