@@ -363,7 +363,7 @@ def reconcile(graph, ontology):
 
 def apply_record(graph, record, root, ontology):
     allowed = {'id', 'type', 'phase'} | LISTS | LITERALS
-    if not isinstance(record, dict) or record.get('type') not in TYPES or set(record) - (allowed | (TASK_DETAILS if record.get('type') == 'Task' else set())):
+    if not isinstance(record, dict) or record.get('type') not in TYPES - {'Event'} or set(record) - (allowed | (TASK_DETAILS if record.get('type') == 'Task' else set())):
         raise ValueError('Unknown record type or fields')
     node = identifier(graph, record.get('id'))
     previous_triples = {t for t in graph.triples if t[0] == node}
@@ -526,7 +526,7 @@ def bootstrap(root, ontology, name=None, title=None):
     try:
         os.close(fd)
         created = not path.exists()
-        proposal = project_scale(root)
+        proposal = project_scale(root) if created else {'scale': 'existing', 'strategy': 'Preserve established tasks'}
         if created:
             inferred = re.sub(r'[^a-z0-9]+', '-', root.name.lower()).strip('-')[:64] or 'project'
             graph = initialize(name or inferred, title or root.name, path, ontology, scale=proposal['scale'], create_records=True)
@@ -560,18 +560,45 @@ def update_file(path, record, expected, ontology):
         def state_of(g, task):
             return {triple for triple in g.triples
                     if triple[0] == task and triple[1] not in excluded}
+        related = {node} | set(updated.values(node, O + 'supports'))
+        related |= set(updated.values(node, O + 'affects'))
+        related |= set(updated.values(node, O + 'assesses'))
+        related |= set(updated.values(node, O + 'target'))
+        touching = reachable(updated, related) | related
         affected = [task for task in updated.typed('Task')
                     if (record['type'] == 'Task' and task == node)
-                    or state_of(updated, task) != state_of(graph, task)]
+                    or state_of(updated, task) != state_of(graph, task)
+                    or task in touching]
         backups = {task_path(path.parent, task):
                    (task_path(path.parent, task).read_bytes()
                     if task_path(path.parent, task).exists() else None)
                    for task in affected}
+        # The old auto-generated Event nodes are retired only when nobody references them.
+        legacy_events = set()
+        for event in updated.typed('Event'):
+            if (re.fullmatch(r'.*/event-[0-9]+', event)
+                    and updated.one(event, O + 'action') == 'record-upsert'
+                    and not any(resource and value == event
+                                for subject, predicate, value, resource in updated.triples)):
+                legacy_events.add(event)
+        if legacy_events:
+            updated.triples = {triple for triple in updated.triples
+                               if triple[0] not in legacy_events}
+        archive = None
         try:
             for task in affected:
                 save_task_document(updated, task, path.parent, actual + 1,
                                    record if task == node and record['type'] == 'Task' else None)
             validate(updated, path.parent, ontology)
+            # A checkpoint is preserved before compaction or at bounded large revisions.
+            if legacy_events or (path.stat().st_size > 150_000 and actual % 50 == 0):
+                archive_dir = path.parent / '.ontolink' / 'archive'
+                if archive_dir.is_symlink():
+                    raise ValueError('Archive directory cannot be a symlink')
+                archive_dir.mkdir(parents=True, exist_ok=True)
+                archive = archive_dir / ('knowledge-revision-' + str(actual) + '.owl')
+                with archive.open('xb') as stream:
+                    stream.write(path.read_bytes())
             with tempfile.NamedTemporaryFile(dir=path.parent, prefix='ontolink-', suffix='.owl', delete=False) as tmp:
                 temporary = Path(tmp.name)
             updated.write(temporary)
@@ -585,6 +612,7 @@ def update_file(path, record, expected, ontology):
             raise
         return {'revision': actual + 1, 'recorded': short(node),
                 'task_records_updated': len(affected),
+                'archive': str(archive.relative_to(path.parent)) if archive else None,
                 'invalidated': [short(a) for a in updated.typed('Artifact')
                                 if updated.one(a, O + 'status') == 'STALE']}
     finally:
