@@ -221,7 +221,7 @@ def project_scale(root):
                         '3 starter tasks' if scale == 'medium' else '7 phase tasks'}
 
 
-def validate(graph, root, ontology):
+def validate(graph, root, ontology, check_task_records=True):
     p = project(graph)
     revision = int(graph.one(p, O + 'revision'))
     if revision < 0:
@@ -243,7 +243,7 @@ def validate(graph, root, ontology):
     phase_ids = set(phase_map)
     for task in graph.typed('Task'):
         record = graph.one(task, O + 'taskRecord')
-        if record is not None:
+        if check_task_records and record is not None:
             expected = '.ontolink/tasks/' + short(task) + '.json'
             if record != expected or not HASH.fullmatch(graph.one(task, O + 'taskRecordHash', '')):
                 raise ValueError('Task JSON reference or hash is invalid')
@@ -415,7 +415,7 @@ def apply_record(graph, record, root, ontology):
                     if graph.has_type(dep, 'Task'):
                         graph.set(dep, O + 'status', 'TODO')
     reconcile(graph, ontology)
-    validate(graph, root, ontology)
+    validate(graph, root, ontology, check_task_records=False)
     return node
 
 
@@ -555,14 +555,38 @@ def update_file(path, record, expected, ontology):
         updated = copy.deepcopy(graph)
         node = apply_record(updated, record, path.parent, ontology)
         updated.set(p, O + 'revision', actual + 1)
-        event = p + '/event-' + str(actual + 1)
-        updated.add(event, TYPE, O + 'Event', True); updated.add(event, O + 'affects', node, True)
-        updated.add(event, O + 'belongsTo', p, True)
-        updated.add(event, O + 'action', 'record-upsert'); updated.add(event, O + 'createdAt', stamp())
-        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='ontolink-', suffix='.owl', delete=False) as tmp:
-            temporary = Path(tmp.name)
-        updated.write(temporary); os.replace(temporary, path)
-        return {'revision': actual + 1, 'recorded': short(node), 'invalidated': [short(a) for a in updated.typed('Artifact') if updated.one(a, O + 'status') == 'STALE']}
+        # Store only latest task updates; do not append Event nodes or receipts.
+        excluded = {O + 'taskRecord', O + 'taskRecordHash', O + 'updatedAt'}
+        def state_of(g, task):
+            return {triple for triple in g.triples
+                    if triple[0] == task and triple[1] not in excluded}
+        affected = [task for task in updated.typed('Task')
+                    if (record['type'] == 'Task' and task == node)
+                    or state_of(updated, task) != state_of(graph, task)]
+        backups = {task_path(path.parent, task):
+                   (task_path(path.parent, task).read_bytes()
+                    if task_path(path.parent, task).exists() else None)
+                   for task in affected}
+        try:
+            for task in affected:
+                save_task_document(updated, task, path.parent, actual + 1,
+                                   record if task == node and record['type'] == 'Task' else None)
+            validate(updated, path.parent, ontology)
+            with tempfile.NamedTemporaryFile(dir=path.parent, prefix='ontolink-', suffix='.owl', delete=False) as tmp:
+                temporary = Path(tmp.name)
+            updated.write(temporary)
+            os.replace(temporary, path)
+        except Exception:
+            for record_path, original in backups.items():
+                if original is None:
+                    record_path.unlink(missing_ok=True)
+                else:
+                    record_path.write_bytes(original)
+            raise
+        return {'revision': actual + 1, 'recorded': short(node),
+                'task_records_updated': len(affected),
+                'invalidated': [short(a) for a in updated.typed('Artifact')
+                                if updated.one(a, O + 'status') == 'STALE']}
     finally:
         if temporary and temporary.exists():
             temporary.unlink()
@@ -576,21 +600,24 @@ def main():
     boot = sub.add_parser('bootstrap', help='Create or reuse knowledge.owl at the project root')
     boot.add_argument('--root', type=Path, default=Path.cwd())
     boot.add_argument('--project'); boot.add_argument('--title')
-    init = sub.add_parser('init'); init.add_argument('--project', required=True); init.add_argument('--title', required=True); init.add_argument('--output', type=Path, required=True)
+    init = sub.add_parser('init'); init.add_argument('--project', required=True); init.add_argument('--title', required=True); init.add_argument('--output', type=Path, required=True); init.add_argument('--scale', choices=['small', 'medium', 'large'], default='small')
     for command in ['validate', 'context', 'record']:
         child = sub.add_parser(command); child.add_argument('--state', type=Path, required=True)
         if command == 'context':
             child.add_argument('--task'); child.add_argument('--budget', type=int, default=4000)
         if command == 'record':
-            child.add_argument('--input', type=Path, required=True); child.add_argument('--expected-revision', type=int, required=True)
+            source = child.add_mutually_exclusive_group(required=True)
+            source.add_argument('--input', type=Path)
+            source.add_argument('--json', help='Inline JSON avoids extra payload files')
+            child.add_argument('--expected-revision', type=int, required=True)
     args = parser.parse_args(); ontology = Store.read(args.ontology)
     try:
         if args.command == 'bootstrap':
             result = bootstrap(args.root, ontology, args.project, args.title)
         elif args.command == 'init':
-            g = initialize(args.project, args.title, args.output, ontology); result = snapshot(g, ontology, args.output.parent)
+            g = initialize(args.project, args.title, args.output, ontology, scale=args.scale, create_records=True); result = snapshot(g, ontology, args.output.parent)
         elif args.command == 'record':
-            result = update_file(args.state, json.loads(args.input.read_text()), args.expected_revision, ontology)
+            result = update_file(args.state, json.loads(args.json if args.json is not None else args.input.read_text(encoding='utf-8')), args.expected_revision, ontology)
         else:
             graph = Store.read(args.state)
             if args.command == 'validate':
