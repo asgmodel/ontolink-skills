@@ -205,6 +205,34 @@ class MediatorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate(Store.read(state), target, self.ontology)
 
+    def test_project_scale_medium_and_large(self):
+        medium = self.root / 'medium'
+        medium.mkdir()
+        for i in range(26):
+            (medium / f'source-{i}.ts').write_text('// file')
+        result = bootstrap(medium, self.ontology)
+        self.assertEqual(result['proposal']['scale'], 'medium')
+        self.assertEqual(len(Store.read(medium / 'knowledge.owl').typed('Task')), 3)
+        large = self.root / 'large'
+        large.mkdir()
+        for i in range(201):
+            (large / f'source-{i}.ts').write_text('// file')
+        result = bootstrap(large, self.ontology)
+        self.assertEqual(result['proposal']['scale'], 'large')
+        self.assertEqual(len(Store.read(large / 'knowledge.owl').typed('Task')), 7)
+
+    def test_duplicate_dependency_appears_once_in_task_json(self):
+        target = self.root / 'relations'
+        target.mkdir()
+        state = target / 'knowledge.owl'
+        initialize('relations', 'Relations', state, self.ontology, create_records=True)
+        update_file(state, {'id': 'task-build', 'type': 'Task',
+                            'dependsOn': ['task-plan', 'task-plan']}, 0, self.ontology)
+        document = json.loads((target / '.ontolink/tasks/task-build.json').read_text())
+        self.assertEqual(document['relationships']['dependsOn'],
+                         ['urn:ontolink:project:relations/task-plan'])
+        self.assertNotIn('dependsOn', document['properties'])
+
     def test_new_events_are_rejected_and_legacy_events_archived(self):
         with self.assertRaises(ValueError):
             self.record({'id': 'new-event', 'type': 'Event', 'action': 'record-upsert'})
