@@ -124,6 +124,103 @@ def task_gate(graph, task, root):
     return errors
 
 
+# Task detail lives in one file; the graph stores a small routing projection.
+TASK_DETAILS = {'files', 'proofs', 'artifacts', 'evidence', 'assessments',
+                'blockers', 'communication', 'contracts', 'decisions',
+                'recommendations', 'requirements', 'risks', 'testResults',
+                'warnings', 'actors', 'lastUpdate'}
+TASK_LIMIT = 12
+
+
+def task_document(graph, node, revision, previous=None, detail=None):
+    """Build one compact JSON record with each relationship represented once."""
+    properties, relationships = {}, {}
+    for subject, predicate, value, resource in sorted(graph.triples):
+        if subject != node or predicate == TYPE:
+            continue
+        key = predicate.removeprefix(O)
+        if key in {'taskRecord', 'taskRecordHash', 'updatedAt', 'createdAt'}:
+            continue
+        if resource and key != 'phase':
+            relationships.setdefault(key, []).append(value)
+        else:
+            properties.setdefault(key, []).append(value)
+    properties = {key: (values[0] if len(values) == 1 else values)
+                  for key, values in sorted(properties.items())}
+    relationships = {key: sorted(set(values))
+                     for key, values in sorted(relationships.items())}
+    payload = {'formatVersion': 3, 'id': short(node), 'type': 'Task',
+               'uri': node, 'revision': revision, 'updatedAt': stamp(),
+               'properties': properties, 'relationships': relationships}
+    for key in sorted(TASK_DETAILS):
+        value = (detail or {}).get(key, (previous or {}).get(key))
+        if value is None or value == [] or value == '':
+            continue
+        if key == 'lastUpdate':
+            if not isinstance(value, (str, dict)):
+                raise ValueError('lastUpdate must be a string or object')
+        else:
+            if not isinstance(value, list):
+                raise ValueError('Task detail must be an array: ' + key)
+            unique = {}
+            for item in value:
+                token = json.dumps(item, sort_keys=True, ensure_ascii=False)
+                unique[token] = item
+            value = list(unique.values())
+        payload[key] = value
+    return payload
+
+
+def task_path(root, node):
+    name = short(node)
+    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,79}', name):
+        raise ValueError('Invalid task record ID')
+    folder = root / '.ontolink' / 'tasks'
+    target = folder / (name + '.json')
+    if folder.is_symlink() or target.is_symlink():
+        raise ValueError('Task record symlinks are unsupported')
+    return target
+
+
+def save_task_document(graph, node, root, revision, detail=None):
+    path = task_path(root, node)
+    old = json.loads(path.read_text(encoding='utf-8')) if path.exists() else None
+    if old is not None and (old.get('id') != short(node) or old.get('type') != 'Task'):
+        raise ValueError('Existing task JSON identity conflicts with graph')
+    document = task_document(graph, node, revision, old, detail)
+    content = (json.dumps(document, ensure_ascii=False, indent=2, sort_keys=True) + '\n').encode('utf-8')
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix='.task-', suffix='.json', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(content)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    graph.set(node, O + 'taskRecord', '.ontolink/tasks/' + short(node) + '.json')
+    graph.set(node, O + 'taskRecordHash', hashlib.sha256(content).hexdigest())
+    graph.set(node, O + 'updatedAt', document['updatedAt'])
+
+
+def project_scale(root):
+    """Choose task scaffolding from the real source footprint."""
+    excluded = {'.git', '.ontolink', '.agents', 'node_modules', '.venv',
+                'venv', '__pycache__', 'dist', 'build', 'bin', 'obj'}
+    count = 0
+    for path in root.rglob('*'):
+        if set(path.relative_to(root).parts) & excluded or not path.is_file():
+            continue
+        count += 1
+        if count > 200:
+            break
+    scale = 'small' if count <= 25 else 'medium' if count <= 200 else 'large'
+    return {'scale': scale, 'sourceFilesInspected': count,
+            'strategy': '1 starter task' if scale == 'small' else
+                        '3 starter tasks' if scale == 'medium' else '7 phase tasks'}
+
+
 def validate(graph, root, ontology):
     p = project(graph)
     revision = int(graph.one(p, O + 'revision'))
