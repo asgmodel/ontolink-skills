@@ -23,6 +23,10 @@ app/
 
 Task JSON includes properties, one `relationships` map (no duplicated `dependsOn`), relevant files/proofs/evidence, revision and latest update. Empty arrays are omitted. `knowledge.owl` stores a routing projection and a SHA-256 reference to the task JSON. Task details are not copied into the graph. Records, proofs, archive and events folders are virtual until needed; no Python files are generated inside `.ontolink`.
 
+**Format choice:** RDF/OWL handles relationships and workflow routing; JSON stores one current task snapshot; Markdown documents the process. The writer uses compact typed XML nodes without redundant `rdf:datatype="...#string"`. Numeric datatypes remain explicit for SHACL correctness, and duplicate RDF task timestamps/default weights are omitted.
+
+**Optional records:** add `--save-record` to the installed `.rule/ontolink.py record` command only if an operation receipt is needed. It creates a brief `.ontolink/records/revision-N.json` (identity, revision and time), **not** another task copy or Event node.
+
 ```sh
 python /path/to/skill/scripts/mediator.py context --state /path/to/app/knowledge.owl --task task-discover
 python /path/to/skill/scripts/mediator.py record --state /path/to/app/knowledge.owl --json '{"id":"task-discover","type":"Task","lastUpdate":"Reviewed source files"}' --expected-revision 0

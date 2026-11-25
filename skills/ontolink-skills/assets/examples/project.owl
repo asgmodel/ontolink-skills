@@ -1,84 +1,76 @@
 <?xml version='1.0' encoding='utf-8'?>
 <rdf:RDF xmlns:ol="urn:ontolink:" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-  <rdf:Description rdf:about="urn:ontolink:project:example">
-    <rdf:type rdf:resource="urn:ontolink:Project" />
+  <ol:Project rdf:about="urn:ontolink:project:example">
     <ol:revision rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</ol:revision>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Illustrative project; no application work verified</ol:title>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-build">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+    <ol:title>Illustrative project; no application work verified</ol:title>
+  </ol:Project>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-build">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
     <ol:dependsOn rdf:resource="urn:ontolink:project:example/task-plan" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:build" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">implementation</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TODO</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Build project work</ol:title>
+    <ol:requiredKind>implementation</ol:requiredKind>
+    <ol:status>TODO</ol:status>
+    <ol:title>Build project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-deliver">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+  </ol:Task>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-deliver">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
     <ol:dependsOn rdf:resource="urn:ontolink:project:example/task-verify" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:deliver" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">handoff</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TODO</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Deliver project work</ol:title>
+    <ol:requiredKind>handoff</ol:requiredKind>
+    <ol:status>TODO</ol:status>
+    <ol:title>Deliver project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-design">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+  </ol:Task>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-design">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
     <ol:dependsOn rdf:resource="urn:ontolink:project:example/task-discover" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:design" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">contracts</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TODO</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Design project work</ol:title>
+    <ol:requiredKind>contracts</ol:requiredKind>
+    <ol:status>TODO</ol:status>
+    <ol:title>Design project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-discover">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+  </ol:Task>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-discover">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:discover" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">requirements</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">READY</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Discover project work</ol:title>
+    <ol:requiredKind>requirements</ol:requiredKind>
+    <ol:status>READY</ol:status>
+    <ol:title>Discover project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-monitor">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+  </ol:Task>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-monitor">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
     <ol:dependsOn rdf:resource="urn:ontolink:project:example/task-deliver" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:monitor" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">monitoring</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TODO</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Monitor project work</ol:title>
+    <ol:requiredKind>monitoring</ol:requiredKind>
+    <ol:status>TODO</ol:status>
+    <ol:title>Monitor project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-plan">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+  </ol:Task>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-plan">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
     <ol:dependsOn rdf:resource="urn:ontolink:project:example/task-design" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:plan" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">plan</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TODO</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Plan project work</ol:title>
+    <ol:requiredKind>plan</ol:requiredKind>
+    <ol:status>TODO</ol:status>
+    <ol:title>Plan project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:project:example/task-verify">
-    <rdf:type rdf:resource="urn:ontolink:Task" />
+  </ol:Task>
+  <ol:Task rdf:about="urn:ontolink:project:example/task-verify">
     <ol:belongsTo rdf:resource="urn:ontolink:project:example" />
     <ol:dependsOn rdf:resource="urn:ontolink:project:example/task-build" />
-    <ol:owner rdf:datatype="http://www.w3.org/2001/XMLSchema#string">coordinator</ol:owner>
+    <ol:owner>coordinator</ol:owner>
     <ol:phase rdf:resource="urn:ontolink:verify" />
-    <ol:requiredKind rdf:datatype="http://www.w3.org/2001/XMLSchema#string">verification</ol:requiredKind>
-    <ol:status rdf:datatype="http://www.w3.org/2001/XMLSchema#string">TODO</ol:status>
-    <ol:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Verify project work</ol:title>
+    <ol:requiredKind>verification</ol:requiredKind>
+    <ol:status>TODO</ol:status>
+    <ol:title>Verify project work</ol:title>
     <ol:weight rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1</ol:weight>
-  </rdf:Description>
+  </ol:Task>
 </rdf:RDF>

@@ -52,6 +52,25 @@ class ProjectRulesTests(unittest.TestCase):
                        for x in (self.root / '.ontolink').rglob('*.json'))
         self.assertEqual(files, ['.ontolink/tasks/task-discover.json'])
 
+    def test_operation_record_is_opt_in_and_does_not_copy_task(self):
+        self.execute()
+        updated = self.execute('record', json=self.payload(), expected_revision=0,
+                               save_record=True)
+        folder = self.root / '.ontolink/records'
+        files = list(folder.glob('*.json'))
+        self.assertEqual(len(files), 1)
+        self.assertEqual(files[0].name, 'revision-1.json')
+        receipt = json.loads(files[0].read_text(encoding='utf-8'))
+        self.assertEqual(receipt['entity'], {'id': 'scope', 'type': 'Requirement'})
+        self.assertEqual(receipt['revision'], 1)
+        self.assertNotIn('properties', receipt)
+        self.assertNotIn('relationships', receipt)
+        self.assertEqual(updated['record']['operation_record'],
+                         '.ontolink/records/revision-1.json')
+        self.execute('record', json=self.payload(), expected_revision=1)
+        self.assertEqual(len(list(folder.glob('*.json'))), 1)
+        self.assertFalse((self.root / '.ontolink/events').exists())
+
     def test_stale_revision_does_not_change_state(self):
         self.execute()
         before = (self.root / 'knowledge.owl').read_bytes()

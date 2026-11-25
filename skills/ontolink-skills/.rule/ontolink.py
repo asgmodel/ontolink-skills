@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from contextlib import contextmanager
 import json
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import subprocess
@@ -101,6 +102,27 @@ def execute(args):
             raise ValueError('Task record must be a JSON object')
         result = run(skill / 'scripts/mediator.py', 'record', '--state', state,
                      '--json', payload, '--expected-revision', args.expected_revision)
+        if getattr(args, 'save_record', False):
+            path = inside(data, f'records/revision-{result["revision"]}.json')
+            receipt = {
+                'formatVersion': 1,
+                'operation': 'record',
+                'revision': result['revision'],
+                'entity': {'id': result['recorded'], 'type': record['type']},
+                'recordedAt': datetime.now(timezone.utc).isoformat(),
+            }
+            if record['type'] == 'Task':
+                receipt['taskRecord'] = f'.ontolink/tasks/{result["recorded"]}.json'
+            try:
+                if path.exists():
+                    raise ValueError('Operation record already exists; refusing overwrite')
+                atomic_json(path, receipt)
+            except (OSError, ValueError) as error:
+                raise ValueError(
+                    f'Record COMMITTED at revision {result["revision"]}; optional '
+                    f'operation record was not saved. Do not resubmit. {error}'
+                ) from error
+            result['operation_record'] = str(path.relative_to(state.parent))
         try:
             return {'record': result, **refresh(skill, state, data)}
         except (ValueError, OSError) as error:
@@ -122,6 +144,8 @@ def main():
             source.add_argument('--input', help='Existing JSON input; not copied into OntoLink')
             source.add_argument('--json', help='Inline JSON; no temporary record file')
             child.add_argument('--expected-revision', type=int, required=True)
+            child.add_argument('--save-record', action='store_true',
+                               help='Save one optional .ontolink/records/revision-N.json operation record')
     args = parser.parse_args()
     try:
         print(json.dumps(execute(args), ensure_ascii=False, indent=2))

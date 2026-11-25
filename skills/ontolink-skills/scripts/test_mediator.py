@@ -166,6 +166,17 @@ class MediatorTests(unittest.TestCase):
         self.assertEqual(len(current.typed('Event')), 0)
         self.assertEqual(validate(current, self.root, self.ontology)['revision'], 1)
 
+    def test_compact_rdf_xml_preserves_triples_and_omits_string_datatypes(self):
+        copy = self.root / 'roundtrip.owl'
+        original = Store.read(self.state)
+        original.write(copy)
+        content = copy.read_text(encoding='utf-8')
+        self.assertNotIn('XMLSchema#string', content)
+        self.assertNotIn('<rdf:Description', content)
+        self.assertIn('<ol:Project', content)
+        self.assertIn('XMLSchema#integer', content)
+        self.assertEqual(original.triples, Store.read(copy).triples)
+
     def test_small_project_has_one_task_and_one_json(self):
         target = self.root / 'tiny'
         target.mkdir()

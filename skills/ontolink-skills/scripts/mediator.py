@@ -201,7 +201,8 @@ def save_task_document(graph, node, root, revision, detail=None):
             temporary.unlink(missing_ok=True)
     graph.set(node, O + 'taskRecord', '.ontolink/tasks/' + short(node) + '.json')
     graph.set(node, O + 'taskRecordHash', hashlib.sha256(content).hexdigest())
-    graph.set(node, O + 'updatedAt', document['updatedAt'])
+    # updatedAt is stored in the task JSON; do not duplicate it in the graph.
+    graph.triples = {t for t in graph.triples if t[:2] != (node, O + 'updatedAt')}
 
 
 def project_scale(root):
@@ -496,7 +497,7 @@ def initialize(name, title, output, ontology, scale='large', create_records=Fals
         task = p + '/task-' + phase_name
         graph.add(task, TYPE, O + 'Task', True); graph.add(task, O + 'phase', phase['id'], True); graph.add(task, O + 'belongsTo', p, True)
         graph.add(task, O + 'title', phase_name.capitalize() + ' project work')
-        graph.add(task, O + 'owner', 'coordinator'); graph.add(task, O + 'weight', 1)
+        graph.add(task, O + 'owner', 'coordinator')  # Default unit weight is implicit.
         graph.add(task, O + 'requiredKind', phase['required_kind'])
         graph.add(task, O + 'status', 'TODO' if previous else 'READY')
         if previous:

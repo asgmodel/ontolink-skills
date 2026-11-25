@@ -5,75 +5,61 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
 >
-  <rdf:Description rdf:about="urn:ontolink:supports">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>supports</rdfs:label>
+  <owl:ObjectProperty rdf:about="urn:ontolink:supports">
+
     <rdfs:range rdf:resource="urn:ontolink:Artifact"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:design">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </owl:ObjectProperty>
+  <ol:Phase rdf:about="urn:ontolink:design">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">1</ol:order>
     <ol:requiredKind>contracts</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-architecture"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-nexus-full-stack"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-template-architecture"/>
     <ol:nextPhase rdf:resource="urn:ontolink:plan"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:plan">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </ol:Phase>
+  <ol:Phase rdf:about="urn:ontolink:plan">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">2</ol:order>
     <ol:requiredKind>plan</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-planning"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-autotaska"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-chatgpt-task-creator"/>
     <ol:nextPhase rdf:resource="urn:ontolink:build"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:role">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Phase>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:role">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:LikelihoodAssessment">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>LikelihoodAssessment</rdfs:label>
-    <rdfs:comment>Event probability or qualified estimate with explicit event, horizon, method and calibration status; absence of a value means unknown.</rdfs:comment>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-discovery">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <owl:Class rdf:about="urn:ontolink:LikelihoodAssessment">
+
+
+  </owl:Class>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-discovery">
     <ol:skillName>ontolink-discovery</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-professional-interface-builder">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </ol:Skill>
+  <ol:Skill rdf:about="urn:ontolink:skill-professional-interface-builder">
     <ol:skillName>professional-interface-builder</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-implementation">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </ol:Skill>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-implementation">
     <ol:skillName>ontolink-implementation</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:target">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>target</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:eventScope">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:ObjectProperty rdf:about="urn:ontolink:target">
+
+  </owl:ObjectProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:eventScope">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:monitor">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </owl:DatatypeProperty>
+  <ol:Phase rdf:about="urn:ontolink:monitor">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">6</ol:order>
     <ol:requiredKind>monitoring</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-monitoring"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-autotaska"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Warning">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Warning</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Skill">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Skill</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:build">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </ol:Phase>
+  <owl:Class rdf:about="urn:ontolink:Warning">
+
+  </owl:Class>
+  <owl:Class rdf:about="urn:ontolink:Skill">
+
+  </owl:Class>
+  <ol:Phase rdf:about="urn:ontolink:build">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">3</ol:order>
     <ol:requiredKind>implementation</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-implementation"/>
@@ -81,313 +67,241 @@
     <ol:usesSkill rdf:resource="urn:ontolink:skill-full-stack"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-professional-interface-builder"/>
     <ol:nextPhase rdf:resource="urn:ontolink:verify"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:rationale">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Phase>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:rationale">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:deliver">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </owl:DatatypeProperty>
+  <ol:Phase rdf:about="urn:ontolink:deliver">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</ol:order>
     <ol:requiredKind>handoff</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-delivery"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-project-creator"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-template-verification"/>
     <ol:nextPhase rdf:resource="urn:ontolink:monitor"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:usesArtifact">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>usesArtifact</rdfs:label>
+  </ol:Phase>
+  <owl:ObjectProperty rdf:about="urn:ontolink:usesArtifact">
+
     <rdfs:range rdf:resource="urn:ontolink:Artifact"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:nextPhase">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="urn:ontolink:nextPhase">
     <rdfs:range rdf:resource="urn:ontolink:Phase"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:revision">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:ObjectProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:revision">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:satisfies">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>satisfies</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:ObjectProperty rdf:about="urn:ontolink:satisfies">
+
     <rdfs:range rdf:resource="urn:ontolink:Requirement"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:outcome">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:ObjectProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:outcome">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:timeHorizon">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:timeHorizon">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:createdAt">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:createdAt">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Evidence">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Evidence</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:belongsTo">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:DatatypeProperty>
+  <owl:Class rdf:about="urn:ontolink:Evidence">
+
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="urn:ontolink:belongsTo">
     <rdfs:range rdf:resource="urn:ontolink:Project"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:path">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:ObjectProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:path">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:ConfidenceAssessment">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>ConfidenceAssessment</rdfs:label>
+  </owl:DatatypeProperty>
+  <owl:Class rdf:about="urn:ontolink:ConfidenceAssessment">
+
     <owl:disjointWith rdf:resource="urn:ontolink:LikelihoodAssessment"/>
-    <rdfs:comment>Support for a claim based on evidence; subjective or calibrated, never automatically an event probability.</rdfs:comment>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:routesTo">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="urn:ontolink:routesTo">
     <rdfs:range rdf:resource="urn:ontolink:Skill"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:verify">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </owl:ObjectProperty>
+  <ol:Phase rdf:about="urn:ontolink:verify">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">4</ol:order>
     <ol:requiredKind>verification</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-verification"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-nexus-full-stack"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-template-verification"/>
     <ol:nextPhase rdf:resource="urn:ontolink:deliver"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:externalReference">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Phase>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:externalReference">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-template-architecture">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-template-architecture">
     <ol:skillName>template-architecture</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-project-creator">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </ol:Skill>
+  <ol:Skill rdf:about="urn:ontolink:skill-project-creator">
     <ol:skillName>project-creator</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:owner">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:owner">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-nexus-full-stack">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-nexus-full-stack">
     <ol:skillName>nexus-full-stack</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Phase">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Phase</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:order">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:Class rdf:about="urn:ontolink:Phase">
+
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:order">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-verification">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-verification">
     <ol:skillName>ontolink-verification</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:phase">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>phase</rdfs:label>
+  </ol:Skill>
+  <owl:ObjectProperty rdf:about="urn:ontolink:phase">
+
     <rdfs:range rdf:resource="urn:ontolink:Phase"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:usesSkill">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="urn:ontolink:usesSkill">
     <rdfs:range rdf:resource="urn:ontolink:Skill"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Message">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Message</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:discover">
-    <rdf:type rdf:resource="urn:ontolink:Phase"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="urn:ontolink:Message">
+
+  </owl:Class>
+  <ol:Phase rdf:about="urn:ontolink:discover">
     <ol:order rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">0</ol:order>
     <ol:requiredKind>requirements</ol:requiredKind>
     <ol:routesTo rdf:resource="urn:ontolink:skill-ontolink-discovery"/>
     <ol:usesSkill rdf:resource="urn:ontolink:skill-project-creator"/>
     <ol:nextPhase rdf:resource="urn:ontolink:design"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Actor">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Actor</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-chatgpt-task-creator">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </ol:Phase>
+  <owl:Class rdf:about="urn:ontolink:Actor">
+
+  </owl:Class>
+  <ol:Skill rdf:about="urn:ontolink:skill-chatgpt-task-creator">
     <ol:skillName>chatgpt-task-creator</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-full-stack">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </ol:Skill>
+  <ol:Skill rdf:about="urn:ontolink:skill-full-stack">
     <ol:skillName>full-stack</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-architecture">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </ol:Skill>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-architecture">
     <ol:skillName>ontolink-architecture</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Event">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Event</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Risk">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Risk</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:title">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:Class rdf:about="urn:ontolink:Event">
+
+  </owl:Class>
+  <owl:Class rdf:about="urn:ontolink:Risk">
+
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:title">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:dependsOn">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>dependsOn</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Task">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Task</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Blocker">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Blocker</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-planning">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <owl:ObjectProperty rdf:about="urn:ontolink:dependsOn">
+
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="urn:ontolink:Task">
+
+  </owl:Class>
+  <owl:Class rdf:about="urn:ontolink:Blocker">
+
+  </owl:Class>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-planning">
     <ol:skillName>ontolink-planning</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Recommendation">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Recommendation</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:kind">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:Class rdf:about="urn:ontolink:Recommendation">
+
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:kind">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:calibrated">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:calibrated">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:assesses">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>assesses</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:weight">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:ObjectProperty rdf:about="urn:ontolink:assesses">
+
+  </owl:ObjectProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:weight">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-monitoring">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-monitoring">
     <ol:skillName>ontolink-monitoring</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:summary">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:summary">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:messageStatus">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:messageStatus">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:severity">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:severity">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:proofPath">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:proofPath">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:requiredKind">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:requiredKind">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Contract">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Contract</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:targetHash">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:Class rdf:about="urn:ontolink:Contract">
+
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:targetHash">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Requirement">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Requirement</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:blocking">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:Class rdf:about="urn:ontolink:Requirement">
+
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:blocking">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-autotaska">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-autotaska">
     <ol:skillName>autotaska</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Artifact">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Artifact</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:value">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:Class rdf:about="urn:ontolink:Artifact">
+
+  </owl:Class>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:value">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skillName">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:skillName">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:method">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:method">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-template-verification">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-template-verification">
     <ol:skillName>template-verification</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:affects">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>affects</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:status">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </ol:Skill>
+  <owl:ObjectProperty rdf:about="urn:ontolink:affects">
+
+  </owl:ObjectProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:status">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:derivedFrom">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>derivedFrom</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:ontology">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+  </owl:DatatypeProperty>
+  <owl:ObjectProperty rdf:about="urn:ontolink:derivedFrom">
+
+  </owl:ObjectProperty>
+  <owl:Ontology rdf:about="urn:ontolink:ontology">
     <owl:versionInfo>1.0.0</owl:versionInfo>
-    <rdfs:label>OntoLink Project Mediation Ontology</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:basis">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+
+  </owl:Ontology>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:basis">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:action">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:action">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:proofHash">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:proofHash">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:contentHash">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:contentHash">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:engineeringSkill">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#DatatypeProperty"/>
+  </owl:DatatypeProperty>
+  <owl:DatatypeProperty rdf:about="urn:ontolink:engineeringSkill">
     <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Project">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Project</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:source">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
-    <rdfs:label>source</rdfs:label>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:skill-ontolink-delivery">
-    <rdf:type rdf:resource="urn:ontolink:Skill"/>
+  </owl:DatatypeProperty>
+  <owl:Class rdf:about="urn:ontolink:Project">
+
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="urn:ontolink:source">
+
+  </owl:ObjectProperty>
+  <ol:Skill rdf:about="urn:ontolink:skill-ontolink-delivery">
     <ol:skillName>ontolink-delivery</ol:skillName>
-  </rdf:Description>
-  <rdf:Description rdf:about="urn:ontolink:Decision">
-    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
-    <rdfs:label>Decision</rdfs:label>
-  </rdf:Description>
+  </ol:Skill>
+  <owl:Class rdf:about="urn:ontolink:Decision">
+
+  </owl:Class>
 </rdf:RDF>

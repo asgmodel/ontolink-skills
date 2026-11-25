@@ -78,8 +78,14 @@ class Store:
     def write(self, path):
         root = ET.Element('{' + RDF + '}RDF')
         for subject in sorted(self.subjects()):
-            node = ET.SubElement(root, '{' + RDF + '}Description', {'{' + RDF + '}about': subject})
-            for _, predicate, value, resource in sorted(t for t in self.triples if t[0] == subject):
+            triples = sorted(t for t in self.triples if t[0] == subject)
+            types = [t for t in triples if t[1] == TYPE and t[3] and t[2].startswith(O)]
+            typed = len(types) == 1
+            tag = '{' + O + '}' + types[0][2][len(O):] if typed else '{' + RDF + '}Description'
+            node = ET.SubElement(root, tag, {'{' + RDF + '}about': subject})
+            for _, predicate, value, resource in triples:
+                if typed and predicate == TYPE and resource and value == types[0][2]:
+                    continue
                 if predicate.startswith(O):
                     tag = '{' + O + '}' + predicate[len(O):]
                 elif predicate.startswith(RDF):
@@ -91,8 +97,10 @@ class Store:
                     prop.set('{' + RDF + '}resource', value)
                 else:
                     local = predicate[len(O):] if predicate.startswith(O) else ''
-                    dtype = {'revision': 'integer', 'order': 'integer', 'weight': 'decimal', 'value': 'decimal', 'calibrated': 'boolean', 'blocking': 'boolean', 'createdAt': 'dateTime'}.get(local, 'string')
-                    prop.set('{' + RDF + '}datatype', XSD + dtype)
+                    # RDF 1.1 plain text is already xsd:string; preserve non-string types.
+                    dtype = {'revision': 'integer', 'order': 'integer', 'weight': 'decimal', 'value': 'decimal', 'calibrated': 'boolean', 'blocking': 'boolean', 'createdAt': 'dateTime'}.get(local)
+                    if dtype:
+                        prop.set('{' + RDF + '}datatype', XSD + dtype)
                     prop.text = value
         ET.indent(root)
         ET.ElementTree(root).write(path, encoding='utf-8', xml_declaration=True)
