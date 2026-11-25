@@ -36,7 +36,7 @@ ol:EvidenceShape a sh:NodeShape ;
             sh:minCount 1 ;
             sh:path ol:targetHash ],
         [ sh:datatype xsd:string ;
-            sh:in ( "PASS"^^xsd:string "FAIL"^^xsd:string "BLOCKED"^^xsd:string ) ;
+            sh:pattern "^(PASS|FAIL|BLOCKED)$" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:path ol:outcome ],
@@ -85,7 +85,7 @@ ol:TaskShape a sh:NodeShape ;
             sh:minCount 1 ;
             sh:path ol:phase ],
         [ sh:datatype xsd:string ;
-            sh:in ( "TODO"^^xsd:string "READY"^^xsd:string "RUNNING"^^xsd:string "BLOCKED"^^xsd:string "DONE"^^xsd:string ) ;
+            sh:pattern "^(TODO|READY|RUNNING|BLOCKED|DONE)$" ;
             sh:maxCount 1 ;
             sh:minCount 1 ;
             sh:path ol:status ],
