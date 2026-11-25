@@ -38,3 +38,45 @@ A task may be completed only with verified current artifact/proof hashes. Depend
 The seven phase procedures stay installed for on-demand routing. Read [the coordinator](skills/ontolink-skills/SKILL.md) for operational instructions, [task record contract](skills/ontolink-skills/references/record-contract.md) for fields, and [project rules](skills/ontolink-skills/.rule/ONTOLOGY-FIRST.md) for integration.
 
 Tests: `python scripts/check.py` (requires `requirements-dev.txt`). This repository does **not** include generated `.ontolink` directories or project-specific task JSON.
+
+## Reproducible RDF / JSON / Markdown benchmark
+
+Four **synthetic**, equivalent task sets test account signup (8 tasks), SQL login
+(40), WhatsApp sending (200), and Azure deployment (900). In each format the
+benchmark reads and parses the data, retrieves the selected task and direct
+dependencies, decides its READY/BLOCKED status, writes an actual work-order
+artifact, and verifies that artifact's SHA-256. It does not deploy, modify
+application source, or call a language model.
+
+Run from the distribution checkout (Python standard library only):
+
+    python scripts/benchmark_storage_formats.py --out /tmp/ontolink-benchmark --repeats 100 --price-per-million 0.75
+
+Local example (median from 100 repetitions; estimated tokens are UTF-8 bytes / 3,
+the existing OntoLink context proxy, NOT actual billed token counts):
+
+| Target | Task count | Full JSON est. tokens | Focused JSON est. tokens | Saving | Read/focus p50 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Signup | 8 | 985 | 265 | 73.1% | ~0.10 ms |
+| SQL login | 40 | 4,851 | 411 | 91.5% | ~0.11 ms |
+| WhatsApp | 200 | 24,076 | 676 | 97.2% | ~0.38 ms |
+| Azure | 900 | 108,134 | 1,094 | 99.0% | ~1.54 ms |
+
+At $0.75 per 1M input tokens ([GPT-5.4 mini price](https://developers.openai.com/api/docs/models/gpt-5.4-mini)),
+1,000 hypothetical calls in the 900-task JSON case would cost approximately
+**$81.10 full** versus **$0.82 focused** in **input tokens only**. This excludes
+output, caching, API calls and tools. Actual tokenization and pricing may differ.
+
+All 12 format/case checks recovered the correct task, immediate dependencies and
+readiness decision; this is **deterministic fixture fidelity**, not measured LLM
+hallucination. The writing step is measured separately from read/focus time.
+There is no real LLM response-time measurement or actual code/deployment task
+benchmark here.
+
+Structured Markdown was smallest in this sample, JSON generally parsed faster,
+and RDF/XML retained explicit semantic relations but used more bytes. **Focused
+retrieval matters more than changing extensions.** Preferred architecture:
+compact OWL for relations, one JSON for each active task, optional records on
+request, and Markdown for explanatory documentation. Output CSV/JSON files go
+to the chosen benchmark output path, never automatically to the skills repository
+or the project's .ontolink directory.
