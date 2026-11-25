@@ -35,8 +35,7 @@ class SetupTests(unittest.TestCase):
         self.assertEqual(len(list((self.project / '.agents/skills').iterdir())), 1)
         self.assertEqual(len(list((self.project / '.agents/skills/ontolink-skills/skills').iterdir())), 7)
         self.assertTrue((self.project / 'knowledge.owl').exists())
-        self.assertTrue((self.project / '.ontolink/tasks/task-discover.json').exists())
-        self.assertFalse((self.project / '.ontolink/context.json').exists())
+        self.assertTrue((self.project / '.ontolink/context.json').exists())
         self.assertTrue((self.project / '.agents/skills/ontolink-skills/references/project-intelligence.md').is_file())
         self.assertFalse(list(self.project.glob('*.json')))
         before = (self.project / 'knowledge.owl').read_bytes()
@@ -48,12 +47,10 @@ class SetupTests(unittest.TestCase):
         self.setup()
         core = self.project / '.agents/skills/ontolink-skills'
         record = self.project / '.ontolink/records/existing.json'
-        record.parent.mkdir(parents=True, exist_ok=True)
         record.write_text(json.dumps({'id': 'existing', 'type': 'Requirement', 'title': 'Keep this knowledge'}))
         manager.run_json(core / 'scripts/mediator.py', 'record', '--state', self.project / 'knowledge.owl',
                          '--input', record, '--expected-revision', 0)
         for relative in ['.ontolink/proofs/old.log', '.ontolink/artifacts/old.txt', 'app.py']:
-            (self.project / relative).parent.mkdir(parents=True, exist_ok=True)
             (self.project / relative).write_text('Existing project bytes: ' + relative)
         artifact = self.project / '.ontolink/artifacts/old.txt'
         proof = self.project / '.ontolink/proofs/old.log'
@@ -145,14 +142,12 @@ class SetupTests(unittest.TestCase):
         self.setup()
         (self.project / 'state').mkdir()
         (self.project / 'knowledge.owl').rename(self.project / 'state/custom.owl')
-        shutil.move(str(self.project / '.ontolink'), str(self.project / 'state/.ontolink'))
         before = (self.project / 'state/custom.owl').read_bytes()
         result = self.setup(state_path='state/custom.owl')
         self.assertEqual(result['revision'], 0)
         self.assertEqual((self.project / 'state/custom.owl').read_bytes(), before)
         self.assertFalse((self.project / 'knowledge.owl').exists())
-        self.assertTrue((self.project / 'state/.ontolink/tasks/task-discover.json').exists())
-        self.assertFalse((self.project / 'state/.ontolink/context.json').exists())
+        self.assertTrue((self.project / 'state/.ontolink/context.json').exists())
 
     def test_missing_phase_stops_before_project_mutation(self):
         shutil.rmtree(self.source / 'skills/ontolink-delivery')

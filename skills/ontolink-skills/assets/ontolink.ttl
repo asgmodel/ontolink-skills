@@ -1,0 +1,304 @@
+@prefix ol: <urn:ontolink:> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ol:Actor a owl:Class ;
+    rdfs:label "Actor" .
+
+ol:Blocker a owl:Class ;
+    rdfs:label "Blocker" .
+
+ol:ConfidenceAssessment a owl:Class ;
+    rdfs:label "ConfidenceAssessment" ;
+    rdfs:comment "Support for a claim based on evidence; subjective or calibrated, never automatically an event probability." ;
+    owl:disjointWith ol:LikelihoodAssessment .
+
+ol:Contract a owl:Class ;
+    rdfs:label "Contract" .
+
+ol:Decision a owl:Class ;
+    rdfs:label "Decision" .
+
+ol:Event a owl:Class ;
+    rdfs:label "Event" .
+
+ol:Evidence a owl:Class ;
+    rdfs:label "Evidence" .
+
+ol:Message a owl:Class ;
+    rdfs:label "Message" .
+
+ol:Recommendation a owl:Class ;
+    rdfs:label "Recommendation" .
+
+ol:Risk a owl:Class ;
+    rdfs:label "Risk" .
+
+ol:Task a owl:Class ;
+    rdfs:label "Task" .
+
+ol:Warning a owl:Class ;
+    rdfs:label "Warning" .
+
+ol:action a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:affects a owl:ObjectProperty ;
+    rdfs:label "affects" .
+
+ol:assesses a owl:ObjectProperty ;
+    rdfs:label "assesses" .
+
+ol:basis a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:belongsTo a owl:ObjectProperty ;
+    rdfs:range ol:Project .
+
+ol:blocking a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean .
+
+ol:calibrated a owl:DatatypeProperty ;
+    rdfs:range xsd:boolean .
+
+ol:contentHash a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:createdAt a owl:DatatypeProperty ;
+    rdfs:range xsd:dateTime .
+
+ol:dependsOn a owl:ObjectProperty ;
+    rdfs:label "dependsOn" .
+
+ol:derivedFrom a owl:ObjectProperty ;
+    rdfs:label "derivedFrom" .
+
+ol:discover a ol:Phase ;
+    ol:nextPhase ol:design ;
+    ol:order 0 ;
+    ol:requiredKind "requirements" ;
+    ol:routesTo ol:skill-ontolink-discovery ;
+    ol:usesSkill ol:skill-project-creator .
+
+ol:engineeringSkill a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:eventScope a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:externalReference a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:kind a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:messageStatus a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:method a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:nextPhase a owl:ObjectProperty ;
+    rdfs:range ol:Phase .
+
+ol:ontology a owl:Ontology ;
+    rdfs:label "OntoLink Project Mediation Ontology" ;
+    owl:versionInfo "1.0.0" .
+
+ol:order a owl:DatatypeProperty ;
+    rdfs:range xsd:integer .
+
+ol:outcome a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:owner a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:path a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:phase a owl:ObjectProperty ;
+    rdfs:label "phase" ;
+    rdfs:range ol:Phase .
+
+ol:proofHash a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:proofPath a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:rationale a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:requiredKind a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:revision a owl:DatatypeProperty ;
+    rdfs:range xsd:integer .
+
+ol:role a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:routesTo a owl:ObjectProperty ;
+    rdfs:range ol:Skill .
+
+ol:satisfies a owl:ObjectProperty ;
+    rdfs:label "satisfies" ;
+    rdfs:range ol:Requirement .
+
+ol:severity a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:skillName a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:source a owl:ObjectProperty ;
+    rdfs:label "source" .
+
+ol:status a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:summary a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:supports a owl:ObjectProperty ;
+    rdfs:label "supports" ;
+    rdfs:range ol:Artifact .
+
+ol:target a owl:ObjectProperty ;
+    rdfs:label "target" .
+
+ol:targetHash a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:timeHorizon a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:title a owl:DatatypeProperty ;
+    rdfs:range xsd:string .
+
+ol:usesArtifact a owl:ObjectProperty ;
+    rdfs:label "usesArtifact" ;
+    rdfs:range ol:Artifact .
+
+ol:usesSkill a owl:ObjectProperty ;
+    rdfs:range ol:Skill .
+
+ol:value a owl:DatatypeProperty ;
+    rdfs:range xsd:decimal .
+
+ol:weight a owl:DatatypeProperty ;
+    rdfs:range xsd:decimal .
+
+ol:LikelihoodAssessment a owl:Class ;
+    rdfs:label "LikelihoodAssessment" ;
+    rdfs:comment "Event probability or qualified estimate with explicit event, horizon, method and calibration status; absence of a value means unknown." .
+
+ol:Project a owl:Class ;
+    rdfs:label "Project" .
+
+ol:Requirement a owl:Class ;
+    rdfs:label "Requirement" .
+
+ol:build a ol:Phase ;
+    ol:nextPhase ol:verify ;
+    ol:order 3 ;
+    ol:requiredKind "implementation" ;
+    ol:routesTo ol:skill-ontolink-implementation ;
+    ol:usesSkill ol:skill-full-stack,
+        ol:skill-nexus-full-stack,
+        ol:skill-professional-interface-builder .
+
+ol:deliver a ol:Phase ;
+    ol:nextPhase ol:monitor ;
+    ol:order 5 ;
+    ol:requiredKind "handoff" ;
+    ol:routesTo ol:skill-ontolink-delivery ;
+    ol:usesSkill ol:skill-project-creator,
+        ol:skill-template-verification .
+
+ol:design a ol:Phase ;
+    ol:nextPhase ol:plan ;
+    ol:order 1 ;
+    ol:requiredKind "contracts" ;
+    ol:routesTo ol:skill-ontolink-architecture ;
+    ol:usesSkill ol:skill-nexus-full-stack,
+        ol:skill-template-architecture .
+
+ol:monitor a ol:Phase ;
+    ol:order 6 ;
+    ol:requiredKind "monitoring" ;
+    ol:routesTo ol:skill-ontolink-monitoring ;
+    ol:usesSkill ol:skill-autotaska .
+
+ol:plan a ol:Phase ;
+    ol:nextPhase ol:build ;
+    ol:order 2 ;
+    ol:requiredKind "plan" ;
+    ol:routesTo ol:skill-ontolink-planning ;
+    ol:usesSkill ol:skill-autotaska,
+        ol:skill-chatgpt-task-creator .
+
+ol:skill-chatgpt-task-creator a ol:Skill ;
+    ol:skillName "chatgpt-task-creator" .
+
+ol:skill-full-stack a ol:Skill ;
+    ol:skillName "full-stack" .
+
+ol:skill-ontolink-architecture a ol:Skill ;
+    ol:skillName "ontolink-architecture" .
+
+ol:skill-ontolink-delivery a ol:Skill ;
+    ol:skillName "ontolink-delivery" .
+
+ol:skill-ontolink-discovery a ol:Skill ;
+    ol:skillName "ontolink-discovery" .
+
+ol:skill-ontolink-implementation a ol:Skill ;
+    ol:skillName "ontolink-implementation" .
+
+ol:skill-ontolink-monitoring a ol:Skill ;
+    ol:skillName "ontolink-monitoring" .
+
+ol:skill-ontolink-planning a ol:Skill ;
+    ol:skillName "ontolink-planning" .
+
+ol:skill-ontolink-verification a ol:Skill ;
+    ol:skillName "ontolink-verification" .
+
+ol:skill-professional-interface-builder a ol:Skill ;
+    ol:skillName "professional-interface-builder" .
+
+ol:skill-template-architecture a ol:Skill ;
+    ol:skillName "template-architecture" .
+
+ol:verify a ol:Phase ;
+    ol:nextPhase ol:deliver ;
+    ol:order 4 ;
+    ol:requiredKind "verification" ;
+    ol:routesTo ol:skill-ontolink-verification ;
+    ol:usesSkill ol:skill-nexus-full-stack,
+        ol:skill-template-verification .
+
+ol:Artifact a owl:Class ;
+    rdfs:label "Artifact" .
+
+ol:skill-autotaska a ol:Skill ;
+    ol:skillName "autotaska" .
+
+ol:skill-project-creator a ol:Skill ;
+    ol:skillName "project-creator" .
+
+ol:skill-template-verification a ol:Skill ;
+    ol:skillName "template-verification" .
+
+ol:skill-nexus-full-stack a ol:Skill ;
+    ol:skillName "nexus-full-stack" .
+
+ol:Phase a owl:Class ;
+    rdfs:label "Phase" .
+
+ol:Skill a owl:Class ;
+    rdfs:label "Skill" .
+

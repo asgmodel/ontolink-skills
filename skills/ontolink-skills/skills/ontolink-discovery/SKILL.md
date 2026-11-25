@@ -1,14 +1,17 @@
 ---
 name: ontolink-discovery
-description: Discovery phase procedure for ontology-mediated OntoLink tasks.
+description: Execute the discover phase of an OntoLink project using the ontology-mediated state and compact context. Use for OntoLink discovery, the ontolink-discovery workflow, or when the OntoLink mediator routes a task to this phase.
 ---
 
-# Discovery
+# OntoLink Discovery
 
-Load only this phase and the focused context returned by the [coordinator](../../SKILL.md). Follow the existing `knowledge.owl` state; never bootstrap a second graph.
+Resolve the bundled `ontolink-skills` coordinator at `../..` relative to this phase folder; read its [SKILL.md](../../SKILL.md). Read its execution contract and run its mediator against the real project state. Do not rely on platform-generated folder IDs or copy a second ontology into this skill.
 
-**Phase:** `discover`. **Required outcome kind:** `requirements`.
+Before phase work, apply the coordinator's mandatory project bootstrap: create or reuse `knowledge.owl` at the actual project root without requiring a separate user request. Preserve any explicitly configured canonical state path.
 
-Inspect the actual repository, goals, stakeholders and constraints. Record verified requirements, unknowns and blockers; do not invent scope.
-
-Use `mediator.py context --task <id>` to check current dependencies and blockers. Update the existing single task JSON through `record --json` with the observed revision. Attach only relevant source/proof references and the **latest** update. Preserve real evidence and dependencies; mark DONE only after current PASS proof and all prerequisites. Query context again before handing off.
+1. Read the current context packet for the selected task. Confirm its phase is `discover` and its prerequisites are satisfied before execution. For monitoring during an earlier phase, inspect read-only state and report the actual active phase; do not bypass phase closure guards.
+2. Inspect the idea and actual source; record scope, actors, requirements, acceptance criteria, known constraints and unresolved facts.
+3. Read [phase-contract.md](references/phase-contract.md). Apply the relevant original engineering skill instructions and actual project capabilities; never claim that reading their names executes them.
+4. Record factual knowledge, artifacts and proof through the mediator with the observed revision. Keep communications, warnings, blockers, confidence and likelihood distinct. Load uncertainty guidance before making an assessment.
+5. Preserve the required outcome kind `requirements`. Mark DONE only after current evidence and the actual phase outcomes are established. A blocker, missing tool or unknown external prerequisite remains explicit.
+6. Generate a fresh compact packet for the next eligible phase. Do not load all phase skills, duplicate the user's project, fabricate test results or transmit messages solely because the graph recommends them.

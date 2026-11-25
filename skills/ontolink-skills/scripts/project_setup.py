@@ -103,14 +103,21 @@ def setup(project, skills_dir='.agents/skills', state_path='knowledge.owl', sour
     spec.loader.exec_module(adapter)
     existing = state.read_bytes() if state.exists() else None
     changes = []
-    backup = adapter.inside(data, 'archive/setup-' + uuid4().hex)
+    backup = adapter.inside(data, 'backups/' + uuid4().hex)
+    backup.mkdir(parents=True)
     applied = []
     # The wrapper's same lock prevents cooperating record/refresh calls during setup.
     with adapter.session_lock(data):
+        for folder in ['records', 'proofs', 'artifacts']:
+            adapter.inside(data, folder).mkdir(exist_ok=True)
         if state.with_suffix(state.suffix + '.lock').exists():
             raise ValueError('Canonical state has an active writer lock; retry after it finishes')
         if existing is not None:
             run_json(core / 'scripts/mediator.py', 'validate', '--state', state)
+        metadata = adapter.inside(data, 'installation.json')
+        previous = json.loads(metadata.read_text(encoding='utf-8')) if metadata.exists() else {}
+        if not isinstance(previous, dict):
+            raise ValueError('Existing installation metadata must be a JSON object')
         with tempfile.TemporaryDirectory(prefix='setup-', dir=data) as temporary:
             stage = Path(temporary)
             target = safe_path(project, str(Path(skills_dir) / 'ontolink-skills'))
@@ -139,7 +146,7 @@ def setup(project, skills_dir='.agents/skills', state_path='knowledge.owl', sour
                      'Before project work, read `.rule/ONTOLOGY-FIRST.md`. Resolve the installed\n'
                      '`ontolink-skills` coordinator and run `.rule/ontolink.py start` with its actual\n'
                      '`--skill-root` and the canonical `--state` when configured. Keep generated\n'
-                     'OntoLink task JSON in `.ontolink/tasks/`; other folders are optional.\n'
+                     'OntoLink records, proofs and text under the fixed `.ontolink/` directory.\n'
                      '<!-- ontolink:end -->')
             for name in ['AGENTS.md', 'GEMINI.md']:
                 target = safe_path(project, name)
@@ -159,12 +166,9 @@ def setup(project, skills_dir='.agents/skills', state_path='knowledge.owl', sour
                 incoming = stage / name
                 incoming.write_text(text, encoding='utf-8')
                 changes.append((target, incoming))
-            has_old_files = existing is not None or any(
-                target.exists() or target.is_symlink() for target, _ in changes)
-            if has_old_files:
-                backup.mkdir(parents=True, exist_ok=True)
-                if existing is not None:
-                    shutil.copy2(state, backup / 'knowledge.owl')
+            adapter.atomic_json(backup / 'manifest.json', {'paths': [str(target.relative_to(project)) for target, _ in changes]})
+            if existing is not None:
+                shutil.copy2(state, backup / 'knowledge.owl')
             try:
                 for index, (target, incoming) in enumerate(changes):
                     target.parent.mkdir(parents=True, exist_ok=True)
@@ -182,16 +186,19 @@ def setup(project, skills_dir='.agents/skills', state_path='knowledge.owl', sour
                 refreshed = adapter.refresh(installed, state, data)
                 if existing is not None and state.read_bytes() != existing:
                     raise ValueError('Canonical state changed during setup; stop and inspect concurrent activity')
-                result = {'sourceVersion': catalog['version'], 'skillsDirectory': skills_dir,
-                          'canonicalState': state_path, 'backup': str(backup.relative_to(state.parent)) if has_old_files else None,
+                result = {'previousVersion': previous.get('sourceVersion'),
+                          'sourceVersion': catalog['version'], 'skillsDirectory': skills_dir,
+                          'canonicalState': state_path, 'backup': str(backup.relative_to(state.parent)),
                           'revision': refreshed['context']['revision'],
                           'paths': [str(target.relative_to(project)) for target, _ in changes]}
+                adapter.atomic_json(adapter.inside(data, 'installation.json'), result)
                 return result
             except Exception:
                 for target, old, had_old in reversed(applied):
                     remove(target)
                     if had_old:
                         copy(old, target)
+                adapter.inside(data, 'context.json').unlink(missing_ok=True)
                 raise
 
 

@@ -159,96 +159,12 @@ class MediatorTests(unittest.TestCase):
             update_file(self.state, self.assessment(), 99, self.ontology)
         self.assertEqual(before, self.state.read_bytes())
 
-    def test_atomic_record_increments_revision_without_event_growth(self):
+    def test_atomic_record_increments_revision_and_logs_event(self):
         result = update_file(self.state, self.assessment(), 0, self.ontology)
         current = Store.read(self.state)
         self.assertEqual(result['revision'], 1)
-        self.assertEqual(len(current.typed('Event')), 0)
+        self.assertEqual(len(current.typed('Event')), 1)
         self.assertEqual(validate(current, self.root, self.ontology)['revision'], 1)
-
-    def test_small_project_has_one_task_and_one_json(self):
-        target = self.root / 'tiny'
-        target.mkdir()
-        boot = bootstrap(target, self.ontology)
-        graph = Store.read(target / 'knowledge.owl')
-        self.assertEqual(boot['proposal']['scale'], 'small')
-        self.assertEqual(len(graph.typed('Task')), 1)
-        records = list((target / '.ontolink/tasks').glob('*.json'))
-        self.assertEqual(len(records), 1)
-        self.assertFalse((target / '.ontolink/records').exists())
-        self.assertFalse((target / '.ontolink/events').exists())
-        task = graph.typed('Task')[0]
-        self.assertEqual(sha(records[0]), graph.one(task, O + 'taskRecordHash'))
-
-    def test_task_update_replaces_last_update_and_deduplicates_details(self):
-        target = self.root / 'records-fixture'
-        target.mkdir()
-        bootstrap(target, self.ontology)
-        state = target / 'knowledge.owl'
-        entry = {'id': 'task-discover', 'type': 'Task',
-                 'lastUpdate': 'Inspect implementation',
-                 'files': [{'path': 'src/a.py'}, {'path': 'src/a.py'}]}
-        update_file(state, entry, 0, self.ontology)
-        path = target / '.ontolink/tasks/task-discover.json'
-        first = json.loads(path.read_text())
-        self.assertEqual(len(first['files']), 1)
-        self.assertNotIn('dependsOn', first['properties'])
-        self.assertEqual(first['relationships']['belongsTo'], ['urn:ontolink:project:records-fixture'])
-        update_file(state, {'id': 'task-discover', 'type': 'Task',
-                            'lastUpdate': 'Test revised implementation'}, 1, self.ontology)
-        latest = json.loads(path.read_text())
-        self.assertEqual(latest['lastUpdate'], 'Test revised implementation')
-        self.assertEqual(latest['revision'], 2)
-        self.assertEqual(len(Store.read(state).typed('Event')), 0)
-        validate(Store.read(state), target, self.ontology)
-        path.write_text('{}')
-        with self.assertRaises(ValueError):
-            validate(Store.read(state), target, self.ontology)
-
-    def test_project_scale_medium_and_large(self):
-        medium = self.root / 'medium'
-        medium.mkdir()
-        for i in range(26):
-            (medium / f'source-{i}.ts').write_text('// file')
-        result = bootstrap(medium, self.ontology)
-        self.assertEqual(result['proposal']['scale'], 'medium')
-        self.assertEqual(len(Store.read(medium / 'knowledge.owl').typed('Task')), 3)
-        large = self.root / 'large'
-        large.mkdir()
-        for i in range(201):
-            (large / f'source-{i}.ts').write_text('// file')
-        result = bootstrap(large, self.ontology)
-        self.assertEqual(result['proposal']['scale'], 'large')
-        self.assertEqual(len(Store.read(large / 'knowledge.owl').typed('Task')), 7)
-
-    def test_duplicate_dependency_appears_once_in_task_json(self):
-        target = self.root / 'relations'
-        target.mkdir()
-        state = target / 'knowledge.owl'
-        initialize('relations', 'Relations', state, self.ontology, create_records=True)
-        update_file(state, {'id': 'task-build', 'type': 'Task',
-                            'dependsOn': ['task-plan', 'task-plan']}, 0, self.ontology)
-        document = json.loads((target / '.ontolink/tasks/task-build.json').read_text())
-        self.assertEqual(document['relationships']['dependsOn'],
-                         ['urn:ontolink:project:relations/task-plan'])
-        self.assertNotIn('dependsOn', document['properties'])
-
-    def test_new_events_are_rejected_and_legacy_events_archived(self):
-        with self.assertRaises(ValueError):
-            self.record({'id': 'new-event', 'type': 'Event', 'action': 'record-upsert'})
-        graph = Store.read(self.state)
-        project = graph.typed('Project')[0]
-        event = project + '/event-1'
-        graph.add(event, TYPE, O + 'Event', True)
-        graph.add(event, O + 'belongsTo', project, True)
-        graph.add(event, O + 'affects', project + '/task-discover', True)
-        graph.add(event, O + 'action', 'record-upsert')
-        graph.write(self.state)
-        result = update_file(self.state, self.assessment(), 0, self.ontology)
-        self.assertEqual(len(Store.read(self.state).typed('Event')), 0)
-        self.assertTrue((self.root / result['archive']).is_file())
-        self.assertEqual(len(Store.read(self.root / result['archive']).typed('Event')), 1)
-        validate(Store.read(self.state), self.root, self.ontology)
 
     def test_existing_lock_prevents_lost_update(self):
         lock = self.state.with_suffix('.owl.lock'); lock.write_text('Synthetic active writer')

@@ -62,14 +62,17 @@ def session_lock(data: Path):
 
 
 def refresh(skill: Path, state: Path, data: Path, enable_index=False):
-    """Compute fresh context in memory; never cache a second state copy."""
+    cache = inside(data, 'context.json')
+    cache.unlink(missing_ok=True)
     validation = run(skill / 'scripts/mediator.py', 'validate', '--state', state)
     index = inside(data, 'index/project-index.json')
     if enable_index or index.exists():
         run(skill / 'scripts/project_intelligence.py', 'index', '--root', state.parent,
             '--output', index)
     packet = run(skill / 'scripts/mediator.py', 'context', '--state', state)
+    atomic_json(cache, packet)
     return {'validation': validation, 'context': packet}
+
 
 def execute(args):
     root = args.root.resolve(strict=True)
@@ -83,29 +86,37 @@ def execute(args):
         raise ValueError('Explicit state must already exist; use the mediator init command deliberately')
     data = inside(state.parent, '.ontolink')
     data.mkdir(exist_ok=True)
+    for folder in ['records', 'proofs', 'artifacts']:
+        inside(data, folder).mkdir(exist_ok=True)
     with session_lock(data):
+        # Never leave a stale successful packet after any failed operation.
+        inside(data, 'context.json').unlink(missing_ok=True)
         if args.command == 'start':
             if args.state == 'knowledge.owl':
-                boot = run(skill / 'scripts/mediator.py', 'bootstrap', '--root', root)
-                return {'proposal': boot['proposal'], **refresh(skill, state, data, args.index)}
+                run(skill / 'scripts/mediator.py', 'bootstrap', '--root', root)
             return refresh(skill, state, data, args.index)
         if args.command == 'context':
             return refresh(skill, state, data)
-        if getattr(args, 'json', None) is not None:
-            payload = args.json
-        else:
-            source = inside(state.parent, args.input)
-            payload = source.read_text(encoding='utf-8')
-        record = json.loads(payload)
+        payload = inside(state.parent, args.input)
+        if not payload.is_relative_to(data / 'records') or payload.suffix != '.json':
+            raise ValueError('Record input must be .ontolink/records/<name>.json beside canonical state')
+        # Validate payload syntax before invoking the canonical writer.
+        record = json.loads(payload.read_text(encoding='utf-8'))
         if not isinstance(record, dict):
-            raise ValueError('Task record must be a JSON object')
+            raise ValueError('Record input must be a JSON object')
+        receipt = inside(data, f'records/revision-{args.expected_revision + 1}.receipt.json')
+        if receipt.exists():
+            raise ValueError('Receipt already exists; query context and reconcile before retrying')
         result = run(skill / 'scripts/mediator.py', 'record', '--state', state,
-                     '--json', payload, '--expected-revision', args.expected_revision)
+                     '--input', payload, '--expected-revision', args.expected_revision)
         try:
+            atomic_json(receipt, {'input': args.input, 'result': result})
             return {'record': result, **refresh(skill, state, data)}
         except (ValueError, OSError) as error:
-            raise ValueError(f'Record COMMITTED at revision {result["revision"]}; refresh failed. '
+            inside(data, 'context.json').unlink(missing_ok=True)
+            raise ValueError(f'Record COMMITTED at revision {result["revision"]}; refresh/receipt failed. '
                              f'Do not resubmit; rerun context. {error}') from error
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -118,9 +129,7 @@ def main():
         if name == 'start':
             child.add_argument('--index', action='store_true')
         if name == 'record':
-            source = child.add_mutually_exclusive_group(required=True)
-            source.add_argument('--input', help='Existing JSON input; not copied into OntoLink')
-            source.add_argument('--json', help='Inline JSON; no temporary record file')
+            child.add_argument('--input', required=True)
             child.add_argument('--expected-revision', type=int, required=True)
     args = parser.parse_args()
     try:
