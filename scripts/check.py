@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 from rdflib import Graph
 from pyshacl import validate
 
@@ -47,4 +48,13 @@ subprocess.run([sys.executable, str(core / 'scripts/mediator.py'), 'validate', '
 for script in [core / 'scripts/test_mediator.py', core / 'scripts/test_project_intelligence.py', root / 'scripts/test_project_rules.py', core / 'scripts/test_project_setup.py']:
     subprocess.run([sys.executable, str(script)], check=True)
 subprocess.run([sys.executable, str(root / 'scripts/generate_sitemap.py'), '--check'], check=True)
+# Smoke-test the format benchmark without writing generated files to the repository.
+with tempfile.TemporaryDirectory(prefix='ontolink-formats-') as temp:
+    subprocess.run([sys.executable, str(root / 'scripts/benchmark_storage_formats.py'),
+                    '--out', temp, '--repeats', '3'], check=True, stdout=subprocess.DEVNULL)
+    rows = json.loads((Path(temp) / 'results.json').read_text())['results']
+    assert len(rows) == 12 and all(item['exact_fact_match'] for item in rows)
+    assert all(len({item['work_order_sha256'] for item in rows
+                    if item['scenario'] == scenario}) == 1
+               for scenario in {item['scenario'] for item in rows})
 print(f'PASS: one complete package, seven nested phases, self-contained references, {len(owl)} ontology triples, SHACL, and runtime/setup regression suites')
