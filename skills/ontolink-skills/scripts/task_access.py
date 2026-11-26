@@ -153,9 +153,11 @@ def focused_work_packet(graph, ontology, root, task_id, budget=2000):
     if details:
         packet['task_record_revision'] = details.get('revision')
     # A TODO/BLOCKED task must never be advertised as safely executable.
-    packet['next_action'] = ('Review gates and prerequisites' if gates or
-                             packet['task']['status'] not in {'READY', 'RUNNING'}
-                             else 'Proceed with implementation; verify before DONE')
+    # Missing final proof prevents DONE, but must not prevent beginning a READY task.
+    work_blockers = [gate for gate in gates if not gate.startswith('missing-current-evidence:')]
+    packet['next_action'] = ('Resolve prerequisites before work'
+                             if work_blockers or packet['task']['status'] not in {'READY', 'RUNNING'}
+                             else 'Implement the task; satisfy completion gates before DONE')
     estimate = (len(json.dumps(packet, ensure_ascii=False, separators=(',', ':')).encode('utf-8')) + 2) // 3
     packet['context_budget'] = {'estimate': estimate, 'limit': budget,
                                 'overflow': estimate > budget, 'method': 'UTF-8 bytes/3 proxy'}
