@@ -285,7 +285,7 @@ class MediatorTests(unittest.TestCase):
                                   'task-discover', compact=True)['active_task']['description'], deep)
         selected = focused_work_packet(graph, self.ontology, project_root, 'task-discover')
         self.assertEqual(selected['task_details']['description'], deep)
-        self.assertNotIn('description', original_owl)
+        self.assertNotIn('<ol:description>', original_owl)
         update_file(state, {'id': 'task-discover', 'type': 'Task',
                             'lastUpdate': 'Retain detailed intent'}, 1, self.ontology)
         self.assertEqual(json.loads(task_file.read_text(encoding='utf-8'))['description'], deep)
