@@ -101,11 +101,12 @@ def execute(args):
         if args.command == 'search':
             if not state.is_file():
                 raise ValueError('Run start before searching project tasks')
-            if not 1 <= args.limit <= 20:
+            limit = getattr(args, 'limit', 5)
+            if not 1 <= limit <= 20:
                 raise ValueError('Search limit must be between 1 and 20')
             return run(skill / 'scripts/project_intelligence.py', 'search', '--root',
                        state.parent, '--state', state, '--query', args.query,
-                       '--limit', args.limit, '--tasks-only', '--compact')
+                       '--limit', limit, '--tasks-only', '--compact')
         if getattr(args, 'json', None) is not None:
             payload = args.json
         else:
