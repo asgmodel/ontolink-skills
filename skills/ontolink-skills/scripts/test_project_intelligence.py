@@ -53,6 +53,18 @@ class ProjectIntelligenceTests(unittest.TestCase):
         self.assertIn('index', {hit.source for hit in hits})
         self.assertIn('function-refresh', {hit.id for hit in hits})
 
+    def test_task_only_search_ignores_irrelevant_evidence_and_index(self):
+        graph, task = self.graph()
+        artifact = O + 'project:fixture/extra-artifact'
+        graph.add(artifact, TYPE, O + 'Artifact', True)
+        graph.add(artifact, O + 'title', 'Implement authentication refresh token')
+        hits = search(graph, {'version': 1, 'records': [
+            {'id': 'file-auth', 'type': 'SourceFile', 'path': 'auth.py',
+             'summary': 'Implement authentication refresh token'}
+        ]}, 'authentication refresh token', limit=5, only_tasks=True)
+        self.assertEqual([hit.node for hit in hits], [task])
+        self.assertTrue(all(hit.type == 'Task' for hit in hits))
+
     def test_context_preserves_legacy_packet_fields(self):
         base = {
             'project': 'Fixture',

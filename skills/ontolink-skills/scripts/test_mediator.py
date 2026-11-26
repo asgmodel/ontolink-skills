@@ -117,6 +117,22 @@ class MediatorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.record({'id': 'recommend', 'type': 'Recommendation', 'affects': 'task-discover', 'summary': 'Synthetic suggestion', 'status': 'PROPOSED'})
 
+    def test_compact_focus_keeps_evidence_blockers_and_assessments(self):
+        self.complete()
+        self.record(self.assessment())
+        self.record({'id': 'blocked', 'type': 'Blocker', 'affects': 'task-design',
+                     'status': 'OPEN', 'summary': 'Approval is missing'})
+        full = snapshot(self.graph, self.ontology, self.root, 'task-design')
+        compact = snapshot(self.graph, self.ontology, self.root,
+                           'task-design', compact=True)
+        self.assertLess(len(json.dumps(compact)), len(json.dumps(full)))
+        self.assertEqual(compact['completion_gates'], full['completion_gates'])
+        self.assertEqual(compact['active_task']['id'], 'task-design')
+        self.assertNotIn('task_index', compact)
+        for field in ('evidence', 'blockers', 'uncertainty'):
+            self.assertEqual(len(compact[field]), len(full[field]))
+        self.assertTrue(compact['evidence'][0]['current_provenance_pass'])
+
     def test_low_budget_preserves_blockers_and_assessments(self):
         self.record(self.assessment())
         self.record({'id': 'blocked', 'type': 'Blocker', 'affects': 'task-discover', 'status': 'OPEN', 'summary': 'Synthetic prerequisite'})
@@ -188,6 +204,8 @@ class MediatorTests(unittest.TestCase):
         self.assertEqual(len(records), 1)
         self.assertFalse((target / '.ontolink/records').exists())
         self.assertFalse((target / '.ontolink/events').exists())
+        self.assertFalse((target / '.ontolink/evidence').exists())
+        self.assertFalse((target / '.ontolink/proofs').exists())
         task = graph.typed('Task')[0]
         self.assertEqual(sha(records[0]), graph.one(task, O + 'taskRecordHash'))
 
@@ -198,11 +216,18 @@ class MediatorTests(unittest.TestCase):
         state = target / 'knowledge.owl'
         entry = {'id': 'task-discover', 'type': 'Task',
                  'lastUpdate': 'Inspect implementation',
-                 'files': [{'path': 'src/a.py'}, {'path': 'src/a.py'}]}
+                 'files': [{'path': 'src/a.py'}, {'path': 'src/a.py'}],
+                 'evidence': [{'proofPath': 'logs/check.log', 'outcome': 'PASS'},
+                              {'proofPath': 'logs/check.log', 'outcome': 'PASS'}],
+                 'proofs': [{'path': 'logs/check.log'}]}
         update_file(state, entry, 0, self.ontology)
         path = target / '.ontolink/tasks/task-discover.json'
         first = json.loads(path.read_text())
         self.assertEqual(len(first['files']), 1)
+        self.assertEqual(len(first['evidence']), 1)
+        self.assertEqual(first['proofs'], [{'path': 'logs/check.log'}])
+        self.assertFalse((target / '.ontolink/evidence').exists())
+        self.assertFalse((target / '.ontolink/proofs').exists())
         self.assertNotIn('dependsOn', first['properties'])
         self.assertEqual(first['relationships']['belongsTo'], ['urn:ontolink:project:records-fixture'])
         update_file(state, {'id': 'task-discover', 'type': 'Task',

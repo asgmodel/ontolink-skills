@@ -39,9 +39,28 @@ class ProjectRulesTests(unittest.TestCase):
         self.assertEqual(first['proposal']['scale'], 'small')
         self.assertEqual(first['context']['revision'], 0)
         self.assertTrue((self.root / '.ontolink/tasks/task-discover.json').is_file())
-        for name in ['records', 'proofs', 'events', 'archive']:
+        for name in ['records', 'proofs', 'evidence', 'events', 'archive']:
             self.assertFalse((self.root / '.ontolink' / name).exists())
         self.assertFalse((self.root / '.ontolink/context.json').exists())
+
+    def test_search_and_focus_do_not_duplicate_unrelated_context(self):
+        self.execute()
+        hits = self.execute('search', query='discover')
+        self.assertEqual([item['id'] for item in hits['tasks']], ['task-discover'])
+        self.assertNotIn('index', hits)
+        self.assertNotIn('components', hits['tasks'][0])
+        focused = self.execute('context', task='task-discover')['context']
+        full = self.execute('context')['context']
+        self.assertEqual(focused['active_task']['id'], 'task-discover')
+        self.assertNotIn('task_index', focused)
+        self.assertEqual(focused['completion_gates'], full['completion_gates'])
+        self.assertLess(len(json.dumps(focused)), len(json.dumps(full)))
+        self.assertFalse((self.root / '.ontolink/evidence').exists())
+
+    def test_search_rejects_invalid_limit(self):
+        self.execute()
+        with self.assertRaisesRegex(ValueError, 'Search limit'):
+            self.execute('search', query='discover', limit=0)
 
     def test_record_updates_without_cache_or_receipt(self):
         self.execute()
