@@ -55,6 +55,12 @@ class ProjectRulesTests(unittest.TestCase):
         self.assertNotIn('task_index', focused)
         self.assertEqual(focused['completion_gates'], full['completion_gates'])
         self.assertLess(len(json.dumps(focused)), len(json.dumps(full)))
+        # Report measured UTF-8 payload bytes; token estimates are bytes/3 only.
+        byte_count = lambda obj: len(json.dumps(
+            obj, ensure_ascii=False, separators=(',', ':')).encode('utf-8'))
+        print('ONTOLINK_FOCUSED_LOOKUP_BYTES '
+              f'search={byte_count(hits)} full={byte_count(full)} '
+              f'focused={byte_count(focused)}')
         self.assertFalse((self.root / '.ontolink/evidence').exists())
 
     def test_search_rejects_invalid_limit(self):
