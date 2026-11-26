@@ -98,6 +98,13 @@ def execute(args):
             return refresh(skill, state, data, args.index)
         if args.command == 'context':
             return refresh(skill, state, data, focus=getattr(args, 'task', None))
+        if args.command == 'focus':
+            if not state.is_file():
+                raise ValueError('Run start before requesting a task focus')
+            command = ['focus', '--state', state, '--task', args.task, '--budget', args.budget]
+            if getattr(args, 'strict', False):
+                command += ['--strict']
+            return run(skill / 'scripts/project_intelligence.py', *command)
         if args.command == 'search':
             if not state.is_file():
                 raise ValueError('Run start before searching project tasks')
@@ -147,7 +154,7 @@ def execute(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
-    for name in ['start', 'context', 'search', 'record']:
+    for name in ['start', 'context', 'search', 'focus', 'record']:
         child = sub.add_parser(name)
         child.add_argument('--root', type=Path, default=Path.cwd())
         child.add_argument('--skill-root', type=Path, required=True)
@@ -159,6 +166,11 @@ def main():
         if name == 'search':
             child.add_argument('--query', required=True)
             child.add_argument('--limit', type=int, default=5)
+        if name == 'focus':
+            child.add_argument('--task', required=True)
+            child.add_argument('--budget', type=int, default=2000)
+            child.add_argument('--strict', action='store_true',
+                               help='Full project validation before focused context')
         if name == 'record':
             source = child.add_mutually_exclusive_group(required=True)
             source.add_argument('--input', help='Existing JSON input; not copied into OntoLink')
