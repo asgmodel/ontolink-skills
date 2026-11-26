@@ -248,6 +248,73 @@ class MediatorTests(unittest.TestCase):
             validate(Store.read(state), target, self.ontology)
 
 
+    def test_deep_description_stays_in_task_json_not_ontology(self):
+        from task_contract import validate_description
+        from task_access import focused_work_packet
+        project_root = self.root / 'description-project'
+        project_root.mkdir()
+        bootstrap(project_root, self.ontology)
+        state = project_root / 'knowledge.owl'
+        deep = {
+            'context': 'Service uses bearer authentication for external clients.',
+            'problem': 'Login requests return 500 rather than a structured error.',
+            'objective': 'Return stable errors while retaining valid authentication.',
+            'scope': 'Backend validation and regression tests; no frontend redesign.',
+            'approach': 'Inspect auth handlers and add controller error tests.',
+            'acceptanceCriteria': [
+                'Invalid credentials return a controlled 401 response.',
+                'Valid credentials continue to authenticate.',
+            ],
+            'constraints': ['Do not change the public endpoint contract.'],
+            'notes': 'Check null tokens and external auth provider failures.',
+        }
+        self.assertTrue(validate_description(deep))
+        original_owl = (project_root / 'knowledge.owl').read_text(encoding='utf-8')
+        update_file(state, {'id': 'task-discover', 'type': 'Task',
+                            'description': deep}, 0, self.ontology)
+        graph = Store.read(state)
+        uri = graph.typed('Task')[0]
+        task_file = project_root / '.ontolink/tasks/task-discover.json'
+        document = json.loads(task_file.read_text(encoding='utf-8'))
+        self.assertEqual(document['description'], deep)
+        self.assertNotIn(deep['problem'], state.read_text(encoding='utf-8'))
+        self.assertNotIn(deep['objective'], state.read_text(encoding='utf-8'))
+        self.assertFalse(graph.one(uri, O + 'description'))
+        self.assertEqual(graph.one(uri, O + 'title'), 'Discover project work')
+        self.assertEqual(snapshot(graph, self.ontology, project_root,
+                                  'task-discover', compact=True)['active_task']['description'], deep)
+        selected = focused_work_packet(graph, self.ontology, project_root, 'task-discover')
+        self.assertEqual(selected['task_details']['description'], deep)
+        self.assertNotIn('description', original_owl)
+        update_file(state, {'id': 'task-discover', 'type': 'Task',
+                            'lastUpdate': 'Retain detailed intent'}, 1, self.ontology)
+        self.assertEqual(json.loads(task_file.read_text(encoding='utf-8'))['description'], deep)
+        self.assertEqual(validate(Store.read(state), project_root, self.ontology)['status'], 'VALID')
+        self.assertFalse((project_root / '.ontolink/evidence').exists())
+
+    def test_invalid_deep_description_does_not_change_task_or_graph(self):
+        from task_contract import validate_description
+        target = self.root / 'description-invalid'
+        target.mkdir()
+        bootstrap(target, self.ontology)
+        state = target / 'knowledge.owl'
+        task = target / '.ontolink/tasks/task-discover.json'
+        before_graph, before_task = state.read_bytes(), task.read_bytes()
+        cases = [
+            {'problem': ''}, {'acceptanceCriteria': []},
+            {'acceptanceCriteria': ['one', 'one']},
+            {'constraints': [42]}, {'objective': None},
+            {'unknown': 'Unsupported field'}, 'a freeform string'
+        ]
+        for value in cases:
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                validate_description(value)
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                update_file(state, {'id': 'task-discover', 'type': 'Task',
+                                    'description': value}, 0, self.ontology)
+            self.assertEqual(state.read_bytes(), before_graph)
+            self.assertEqual(task.read_bytes(), before_task)
+
     def test_v4_fixed_template_and_optional_fields(self):
         from task_contract import LIST_SECTIONS, TASK_DETAILS, template, FORMAT_VERSION
         import math

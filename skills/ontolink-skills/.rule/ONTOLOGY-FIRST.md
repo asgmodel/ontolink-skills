@@ -20,4 +20,6 @@ Mark DONE only after artifact and proof hashes, prerequisites, and blockers pass
 
 Install or update with `scripts/project_setup.py`. The installer preserves project state and user files; existing managed package replacements may be archived. Host entry points (`AGENTS.md`, `GEMINI.md`, Cursor, Copilot and Cline) should contain brief pointers, not copies of this policy.
 
+Data boundary: the OWL graph stores unique relations, pointers and short routing labels only; long task descriptions live in `description` inside the one task JSON. Do not duplicate instructions in OWL or create new task-specific Markdown files. Search OWL in Python first, open only the chosen JSON (with SHA check) for deeper context.
+
 Task template: use [the canonical task JSON contract](../references/record-contract.md) and its bundled template; it is a **reference**, not another generated task file. Keep confidence about claim support distinct from likelihood for a specified event/time horizon. Do not store duplicate incident IDs or history arrays.

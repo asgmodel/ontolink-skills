@@ -21,6 +21,12 @@ app/
       task-discover.json         # one complete, current record for this task
 ```
 
+Task JSON **v4** supports an optional **deep `description`** object
+(`context`, `problem`, `objective`, `scope`, `approach`, `acceptanceCriteria`,
+`constraints`, `notes`). OWL keeps concise searchable task titles, status,
+phase, ownership, dependencies, and a SHA-256 link to JSON; it does not store
+full problem statements or implementation plans. Python reads the ontology
+for discovery, then reads the selected JSON for the detailed work context.
 Task JSON **v4** includes properties, one `relationships` map (no duplicated `dependsOn`), relevant files/proofs/evidence, revision and latest update. It supports `actors`, `artifacts`, `assessments`, `blockers`, `communication`, `contracts`, `decisions`, `evidence`, `files`, `proofs`, `recommendations`, `requirements`, `risks`, `testResults`, `warnings`, `inputs`, `outputs`, `steps`, `reports`, **`confidence` and `likelihood`**, and optional `timestamps` / `lastUpdate`. The **[fixed reference template](skills/ontolink-skills/assets/task-template.json)** includes all fields, but **runtime files omit empty sections**, and never create a duplicate evidence folder. Validated confidence represents support for a specified claim; likelihood represents an event with an explicit time horizon and is not interchangeable with confidence. `knowledge.owl` stores a routing projection and a SHA-256 reference to the task JSON. Task details are not copied into the graph. Records, proofs, archive and events folders are virtual until needed; no Python files are generated inside `.ontolink`.
 
 **Format choice:** RDF/OWL handles relationships and workflow routing; JSON stores one current task snapshot; Markdown documents the process. The writer uses compact typed XML nodes without redundant `rdf:datatype="...#string"`. Numeric datatypes remain explicit for SHACL correctness, and duplicate RDF task timestamps/default weights are omitted.

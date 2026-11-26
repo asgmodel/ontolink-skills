@@ -26,6 +26,10 @@ The mediator inspects source footprint and proposes small / medium / large start
 4. Re-query and validate. DONE requires completed dependencies, current artifacts, passing proof, and resolved blockers. Never invent successful checks or externally completed actions.
 5. Read [record contract](references/record-contract.md) and the fixed v4 template only before writes; use [execution contract](references/execution-contract.md) only if the workflow requires more detail.
 
+Graph/JSON boundary: `knowledge.owl` contains lightweight identity, links,
+dependencies, status and routing; detailed `description` (problem, objective,
+scope, approach and testable acceptance criteria) exists only in task JSON.
+Search the graph with Python before reading the selected task details.
 Do not copy entire ontologies, index history or all phase files into prompts. The JSON record is a SHA-256-linked snapshot; avoid repeating relations between `properties` and `relationships`. Context provides only the active task and a bounded task index.
 
 Seven on-demand skills are `ontolink-discovery`, `ontolink-architecture`, `ontolink-planning`, `ontolink-implementation`, `ontolink-verification`, `ontolink-delivery` and `ontolink-monitoring`. Optional generated source indexing is available using `project_intelligence.py` for large repositories; it is not canonical task knowledge.

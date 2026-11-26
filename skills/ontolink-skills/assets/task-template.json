@@ -40,5 +40,19 @@
   "confidence": [],
   "likelihood": [],
   "timestamps": {},
-  "lastUpdate": ""
+  "lastUpdate": "",
+  "description": {
+    "context": "Why this work matters and the relevant system background.",
+    "problem": "Describe the behavior or defect to address.",
+    "objective": "Define the desired verified outcome.",
+    "scope": "Specify what is in scope and what is out of scope.",
+    "approach": "Suggested implementation strategy, when known.",
+    "acceptanceCriteria": [
+      "State observable, testable requirements."
+    ],
+    "constraints": [
+      "Record real constraints without duplicating OWL relationships."
+    ],
+    "notes": "Optional technical details and edge cases."
+  }
 }

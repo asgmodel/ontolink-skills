@@ -15,11 +15,28 @@ occur **only** in `relationships`. Each array is deduplicated; singleton
 scalar properties are not wrapped in arrays. No `resourceFields` or
 `events`; `weight=1` need not be stored because it is implicit.
 
+**Separation of responsibilities:** `knowledge.owl` is a small authoritative
+navigation/routing graph (task identity, concise title, phase, status, owner,
+dependencies, artifact relationships, record URI and SHA-256). Full task prose
+belongs **only** in the task JSON. The existing `properties` and
+`relationships` JSON entries are a generated, integrity-checked routing
+projection for backwards compatibility, not a second independently editable
+ontology. Never put a long description or implementation instructions in an
+OWL `summary` literal. Task-only detail fields must not become RDF predicates.
+
+**Optional `description`** is a structured object, written only when known.
+Supported keys are `context`, `problem`, `objective`, `scope`,
+`approach`, `acceptanceCriteria` (list), `constraints` (list) and `notes`.
+It can start with one field and grow as the work becomes clearer. Empty or
+duplicate criteria are rejected. The description is not a search index and is
+never read during initial RDF-only task discovery; it is loaded only when one
+task is selected, and verified against the task JSON hash.
+
 **Optional sections**: `actors`, `artifacts`, `assessments`, `blockers`,
 `communication`, `contracts`, `decisions`, `evidence`, `files`,
 `proofs`, `recommendations`, `requirements`, `risks`, `testResults`,
 `warnings`, `inputs`, `outputs`, `steps`, `reports`, `confidence`,
-`likelihood`, `timestamps` and `lastUpdate`. `timestamps` permits ISO-8601
+`likelihood`, `description`, `timestamps` and `lastUpdate`. `timestamps` permits ISO-8601
 `startedAt`, `dueAt`, `completedAt`; `updatedAt` is generated once at the
 top level. `lastUpdate` stores the *latest* work note; do not accumulate a
 history under `updates` or `events`.

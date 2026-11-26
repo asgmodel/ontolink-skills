@@ -17,10 +17,15 @@ LIST_SECTIONS = (
     'requirements', 'risks', 'testResults', 'warnings', 'inputs', 'outputs',
     'steps', 'reports', 'confidence', 'likelihood',
 )
-TASK_DETAILS = set(LIST_SECTIONS) | {'lastUpdate', 'timestamps'}
+TASK_DETAILS = set(LIST_SECTIONS) | {'lastUpdate', 'timestamps', 'description'}
 TEMPLATE = Path(__file__).resolve().parents[1] / 'assets' / 'task-template.json'
 _ALLOWED_TIMES = {'startedAt', 'dueAt', 'completedAt'}
 _REQUIRED_BASE = {'method', 'rationale', 'calibrated'}
+# Detailed prose belongs only in the task JSON. OWL holds short routing labels,
+# status, phase, dependencies and the task JSON path/hash, never this body.
+DESCRIPTION_FIELDS = ('context', 'problem', 'objective', 'scope', 'approach',
+                      'acceptanceCriteria', 'constraints', 'notes')
+DESCRIPTION_LIST_FIELDS = {'acceptanceCriteria', 'constraints'}
 
 
 def validate_sections(document):
@@ -52,6 +57,8 @@ def validate_sections(document):
     if version == FORMAT_VERSION:
         if document.get('events') is not None or document.get('resourceFields') is not None:
             raise ValueError('Task history and redundant resourceFields are forbidden')
+    if 'description' in document:
+        validate_description(document['description'])
     if 'lastUpdate' in document and not isinstance(document['lastUpdate'], (str, dict)):
         raise ValueError('lastUpdate must be string or object')
     times = document.get('timestamps')
@@ -92,6 +99,26 @@ def validate_sections(document):
                 if ident in seen:
                     raise ValueError('Duplicate assessment ID: ' + str(ident))
                 seen[ident] = key
+    return True
+
+
+def validate_description(value):
+    """Validate optional, structured deep task intent; never store it in RDF."""
+    if not isinstance(value, dict) or not value:
+        raise ValueError('description must be a nonempty object')
+    unknown = set(value) - set(DESCRIPTION_FIELDS)
+    if unknown:
+        raise ValueError('Unknown description fields: ' + ', '.join(sorted(unknown)))
+    for field, content in value.items():
+        if field in DESCRIPTION_LIST_FIELDS:
+            if not isinstance(content, list) or not content:
+                raise ValueError('description.' + field + ' needs a nonempty text list')
+            if any(not isinstance(item, str) or not item.strip() for item in content):
+                raise ValueError('description.' + field + ' contains empty/nontext content')
+            if len(set(content)) != len(content):
+                raise ValueError('Repeated description.' + field)
+        elif not isinstance(content, str) or not content.strip():
+            raise ValueError('description.' + field + ' must be nonempty text')
     return True
 
 
