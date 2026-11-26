@@ -16,6 +16,8 @@ from mediator import ONTOLOGY, snapshot
 from project_indexer import build_index, default_index_path, load_index, update_index, write_index
 from rdf_store import Store
 from retrieval import search
+from smart_tasks import smart_search_tasks
+from task_access import focused_work_packet
 
 
 def _index(root: Path, output: Path | None, changed: list[str]):
@@ -55,6 +57,13 @@ def main():
     srch.add_argument('--tasks-only', action='store_true')
     srch.add_argument('--compact', action='store_true')
 
+    focus = sub.add_parser('focus', help='Targeted task work context with direct integrity checks')
+    focus.add_argument('--state', type=Path, required=True)
+    focus.add_argument('--task', required=True)
+    focus.add_argument('--budget', type=int, default=2000)
+    focus.add_argument('--strict', action='store_true',
+                       help='Validate the entire project before returning the focused packet')
+
     ctx = sub.add_parser('context', help='Extend the legacy mediator packet with ranked project-intelligence hints')
     ctx.add_argument('--root', type=Path, default=Path.cwd())
     ctx.add_argument('--state', type=Path, required=True)
@@ -67,29 +76,32 @@ def main():
     args = parser.parse_args()
     if args.command == 'index':
         result = _index(args.root, args.output, args.changed)
+    elif args.command == 'search' and args.tasks_only:
+        # Stage 1: Python parses project RDF; the model only receives Top-K IDs.
+        # No task JSON, generated source index or static ontology is opened.
+        tasks = smart_search_tasks(Store.read(args.state), args.query, args.limit)
+        result = {'query': args.query, 'tasks': tasks}
+    elif args.command == 'focus':
+        # Stage 2/3: read and SHA-check exactly one task JSON, fetch direct
+        # dependencies and actionable evidence, and send a focused work packet.
+        graph, ontology = _load_state(args.state)
+        if args.strict:
+            from mediator import validate
+            validate(graph, args.state.parent, ontology)
+        result = focused_work_packet(graph, ontology, args.state.parent, args.task, args.budget)
+        if args.strict:
+            result['validation_scope'] = 'full project validation plus focused task'
     else:
         graph, ontology = _load_state(args.state)
-        if args.command == 'search' and args.tasks_only:
-            # Read only task nodes from the canonical graph; do not open the code index.
-            hits = search(graph, None, args.query, args.limit, only_tasks=True)
-            if args.compact:
-                result = {'query': args.query, 'tasks': [
-                    {'id': hit.id, 'title': graph.one(hit.node, 'urn:ontolink:title'),
-                     'status': graph.one(hit.node, 'urn:ontolink:status'),
-                     'phase': graph.one(hit.node, 'urn:ontolink:phase').removeprefix('urn:ontolink:')}
-                    for hit in hits]}
-            else:
-                result = {'query': args.query, 'hits': [hit.as_dict() for hit in hits]}
+        index_data, path = _load_optional_index(args.root, args.index)
+        hits = search(graph, index_data, args.query, args.limit)
+        if args.command == 'search':
+            result = {'index': str(path), 'query': args.query,
+                      'hits': [hit.as_dict() for hit in hits]}
         else:
-            index_data, path = _load_optional_index(args.root, args.index)
-            hits = search(graph, index_data, args.query, args.limit)
-            if args.command == 'search':
-                result = {'index': str(path), 'query': args.query,
-                          'hits': [hit.as_dict() for hit in hits]}
-            else:
-                base = snapshot(graph, ontology, args.state.parent, args.task, args.budget,
-                                compact=bool(args.task))
-                result = compile_context(base, hits, args.budget)
+            base = snapshot(graph, ontology, args.state.parent, args.task, args.budget,
+                            compact=bool(args.task))
+            result = compile_context(base, hits, args.budget)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
