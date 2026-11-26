@@ -80,3 +80,28 @@ compact OWL for relations, one JSON for each active task, optional records on
 request, and Markdown for explanatory documentation. Output CSV/JSON files go
 to the chosen benchmark output path, never automatically to the skills repository
 or the project's .ontolink directory.
+
+## Find a task without spending tokens on the whole graph
+
+From an installed project, use the task-only search, then expand exactly one result:
+
+```sh
+python .rule/ontolink.py search --root . --skill-root .agents/skills/ontolink-skills --query "SQL login" --limit 5
+python .rule/ontolink.py context --root . --skill-root .agents/skills/ontolink-skills --task task-build
+```
+
+Search returns a short `query/tasks` response with **id, title, status, phase** only.
+The search reads the canonical graph and does not load the optional source-code
+index or return unrelated graph entities. A focused context still validates
+evidence and dependencies, retains blockers, warnings and uncertainty, but avoids
+repeating RDF hashes, project membership, empty arrays and unrelated task-index
+entries. The regular `context` command is unchanged for callers that need its
+full output. The project adapter now validates only once per context call.
+
+**Never create `.ontolink/evidence/`.** The task's single JSON stores evidence
+and proof references, while actual logs remain at their original file paths.
+`.ontolink/records/` is still created only if `record --save-record` was
+explicitly requested.
+
+Regression checks run with `python scripts/check.py`. The byte/3 token
+estimates represent output size, **not observed tokenizer usage or hallucination**.
