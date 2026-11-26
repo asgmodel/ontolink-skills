@@ -228,6 +228,12 @@ class MediatorTests(unittest.TestCase):
         self.assertEqual(first['proofs'], [{'path': 'logs/check.log'}])
         self.assertFalse((target / '.ontolink/evidence').exists())
         self.assertFalse((target / '.ontolink/proofs').exists())
+        focused = snapshot(Store.read(state), self.ontology, target,
+                           'task-discover', compact=True)['active_task']
+        self.assertEqual(focused['task_evidence_refs'], first['evidence'])
+        self.assertEqual(focused['task_proof_refs'], first['proofs'])
+        self.assertEqual(focused['task_file_refs'], first['files'])
+        self.assertNotIn('current_provenance_pass', focused['task_evidence_refs'][0])
         self.assertNotIn('dependsOn', first['properties'])
         self.assertEqual(first['relationships']['belongsTo'], ['urn:ontolink:project:records-fixture'])
         update_file(state, {'id': 'task-discover', 'type': 'Task',
