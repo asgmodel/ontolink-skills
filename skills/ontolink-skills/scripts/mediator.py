@@ -420,7 +420,7 @@ def apply_record(graph, record, root, ontology):
     return node
 
 
-def snapshot(graph, ontology, root, focus=None, budget=4000):
+def snapshot(graph, ontology, root, focus=None, budget=4000, compact=False):
     validate(graph, root, ontology)
     tasks = graph.typed('Task')
     if focus:
@@ -472,8 +472,45 @@ def snapshot(graph, ontology, root, focus=None, budget=4000):
         packet['blockers'] = [node_data(n) for n in graph.typed('Blocker') if graph.one(n, O + 'status') == 'OPEN']
         packet['warnings'] = [node_data(n) for n in graph.typed('Warning') if graph.one(n, O + 'status') == 'OPEN']
         packet['next_action'] = 'Review blocked/unmet dependencies; DONE is not assumed when no task is ready.'
+    if compact and selected:
+        # Output-focused projection; full graph remains validated, unmodified and authoritative.
+        # Preserve all blockers, uncertainty, required evidence and completion gates.
+        def pick(item, keys):
+            return {key: item[key] for key in keys if key in item}
+
+        active = ('id', 'type', 'title', 'owner', 'status', 'phase',
+                  'requiredKind', 'dependsOn', 'usesArtifact', 'derivedFrom',
+                  'last_update', 'record_path')
+        context = ('id', 'type', 'title', 'status', 'phase', 'owner',
+                   'kind', 'path', 'summary', 'requiredKind',
+                   'dependsOn', 'usesArtifact')
+        evidence = ('id', 'type', 'supports', 'outcome', 'proofPath',
+                    'current_provenance_pass')
+        signals = ('id', 'type', 'status', 'summary', 'severity', 'blocking',
+                   'affects', 'assesses', 'source', 'target', 'messageStatus',
+                   'externalReference', 'method', 'rationale', 'value',
+                   'calibrated', 'eventScope', 'timeHorizon', 'basis')
+        full = packet
+        packet = {
+            'project': full['project'],
+            'revision': full['revision'],
+            'task_count': full['task_count'],
+            'active_task': pick(full['active_task'], active),
+            'workflow_skill': full['workflow_skill'],
+            'progress': {'percent': full['progress']['percent']},
+            'completion_gates': full['completion_gates'],
+        }
+        if full['engineering_candidates']:
+            packet['engineering_candidates'] = full['engineering_candidates']
+        for name, fields in [('context', context), ('evidence', evidence),
+                             ('uncertainty', signals), ('warnings', signals),
+                             ('blockers', signals), ('recommendations', signals),
+                             ('communication', signals)]:
+            if full[name]:
+                packet[name] = [pick(item, fields) for item in full[name]]
     estimate = math.ceil(len(json.dumps(packet, ensure_ascii=False).encode('utf-8')) / 3)
-    packet['context_budget'] = {'estimate': estimate, 'limit': budget, 'overflow': estimate > budget, 'method': 'UTF-8 bytes/3 heuristic for packet only, not observed model tokens', 'policy': 'No mandatory facts silently removed; split work or increase the budget if overflowing.'}
+    packet['context_budget'] = {'estimate': estimate, 'limit': budget, 'overflow': estimate > budget,
+                                'method': 'UTF-8 bytes/3 approximation; not billed tokens'}
     return packet
 
 
@@ -633,6 +670,7 @@ def main():
         child = sub.add_parser(command); child.add_argument('--state', type=Path, required=True)
         if command == 'context':
             child.add_argument('--task'); child.add_argument('--budget', type=int, default=4000)
+            child.add_argument('--compact', action='store_true')
         if command == 'record':
             source = child.add_mutually_exclusive_group(required=True)
             source.add_argument('--input', type=Path)
@@ -653,7 +691,8 @@ def main():
             else:
                 if args.budget < 1:
                     raise ValueError('Budget must be positive')
-                result = snapshot(graph, ontology, args.state.parent, args.task, args.budget)
+                result = snapshot(graph, ontology, args.state.parent, args.task, args.budget,
+                                  compact=args.compact)
         print(json.dumps(result, ensure_ascii=False, indent=2))
     except (ValueError, OSError, TypeError, KeyError) as error:
         parser.exit(2, 'OntoLink: ' + str(error) + '\n')

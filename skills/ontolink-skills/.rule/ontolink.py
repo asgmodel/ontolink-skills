@@ -62,14 +62,20 @@ def session_lock(data: Path):
         lock.unlink(missing_ok=True)
 
 
-def refresh(skill: Path, state: Path, data: Path, enable_index=False):
-    """Compute fresh context in memory; never cache a second state copy."""
-    validation = run(skill / 'scripts/mediator.py', 'validate', '--state', state)
+def refresh(skill: Path, state: Path, data: Path, enable_index=False, focus=None):
+    """One verified context rather than running full validation twice."""
     index = inside(data, 'index/project-index.json')
     if enable_index or index.exists():
         run(skill / 'scripts/project_intelligence.py', 'index', '--root', state.parent,
             '--output', index)
-    packet = run(skill / 'scripts/mediator.py', 'context', '--state', state)
+    command = ['context', '--state', state]
+    if focus:
+        command += ['--task', focus, '--compact']
+    packet = run(skill / 'scripts/mediator.py', *command)
+    # snapshot verifies graph, task hashes, proof files and project invariants.
+    validation = {'status': 'VALID', 'tasks': packet['task_count'],
+                  'revision': packet['revision'],
+                  'scope': 'Structure, local provenance and workflow guards; proof semantics and external receipts require agent review.'}
     return {'validation': validation, 'context': packet}
 
 def execute(args):
@@ -91,7 +97,15 @@ def execute(args):
                 return {'proposal': boot['proposal'], **refresh(skill, state, data, args.index)}
             return refresh(skill, state, data, args.index)
         if args.command == 'context':
-            return refresh(skill, state, data)
+            return refresh(skill, state, data, focus=getattr(args, 'task', None))
+        if args.command == 'search':
+            if not state.is_file():
+                raise ValueError('Run start before searching project tasks')
+            if not 1 <= args.limit <= 20:
+                raise ValueError('Search limit must be between 1 and 20')
+            return run(skill / 'scripts/project_intelligence.py', 'search', '--root',
+                       state.parent, '--state', state, '--query', args.query,
+                       '--limit', args.limit, '--tasks-only', '--compact')
         if getattr(args, 'json', None) is not None:
             payload = args.json
         else:
@@ -132,13 +146,18 @@ def execute(args):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
-    for name in ['start', 'context', 'record']:
+    for name in ['start', 'context', 'search', 'record']:
         child = sub.add_parser(name)
         child.add_argument('--root', type=Path, default=Path.cwd())
         child.add_argument('--skill-root', type=Path, required=True)
         child.add_argument('--state', default='knowledge.owl')
         if name == 'start':
             child.add_argument('--index', action='store_true')
+        if name == 'context':
+            child.add_argument('--task', help='Task ID for compact validated context')
+        if name == 'search':
+            child.add_argument('--query', required=True)
+            child.add_argument('--limit', type=int, default=5)
         if name == 'record':
             source = child.add_mutually_exclusive_group(required=True)
             source.add_argument('--input', help='Existing JSON input; not copied into OntoLink')

@@ -52,6 +52,8 @@ def main():
     srch.add_argument('--index', type=Path)
     srch.add_argument('--query', required=True)
     srch.add_argument('--limit', type=int, default=10)
+    srch.add_argument('--tasks-only', action='store_true')
+    srch.add_argument('--compact', action='store_true')
 
     ctx = sub.add_parser('context', help='Extend the legacy mediator packet with ranked project-intelligence hints')
     ctx.add_argument('--root', type=Path, default=Path.cwd())
@@ -67,13 +69,27 @@ def main():
         result = _index(args.root, args.output, args.changed)
     else:
         graph, ontology = _load_state(args.state)
-        index_data, path = _load_optional_index(args.root, args.index)
-        hits = search(graph, index_data, args.query, args.limit)
-        if args.command == 'search':
-            result = {'index': str(path), 'query': args.query, 'hits': [hit.as_dict() for hit in hits]}
+        if args.command == 'search' and args.tasks_only:
+            # Read only task nodes from the canonical graph; do not open the code index.
+            hits = search(graph, None, args.query, args.limit, only_tasks=True)
+            if args.compact:
+                result = {'query': args.query, 'tasks': [
+                    {'id': hit.id, 'title': graph.one(hit.node, 'urn:ontolink:title'),
+                     'status': graph.one(hit.node, 'urn:ontolink:status'),
+                     'phase': graph.one(hit.node, 'urn:ontolink:phase').removeprefix('urn:ontolink:')}
+                    for hit in hits]}
+            else:
+                result = {'query': args.query, 'hits': [hit.as_dict() for hit in hits]}
         else:
-            base = snapshot(graph, ontology, args.state.parent, args.task, args.budget)
-            result = compile_context(base, hits, args.budget)
+            index_data, path = _load_optional_index(args.root, args.index)
+            hits = search(graph, index_data, args.query, args.limit)
+            if args.command == 'search':
+                result = {'index': str(path), 'query': args.query,
+                          'hits': [hit.as_dict() for hit in hits]}
+            else:
+                base = snapshot(graph, ontology, args.state.parent, args.task, args.budget,
+                                compact=bool(args.task))
+                result = compile_context(base, hits, args.budget)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

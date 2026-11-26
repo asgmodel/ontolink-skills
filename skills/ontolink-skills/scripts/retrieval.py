@@ -147,8 +147,16 @@ def _core_neighbors(graph, seeds: set[str], max_hops: int = 1) -> dict[str, floa
     return {node: 1.0 / (distance + 1) for node, distance in found.items() if distance > 0}
 
 
-def search(graph, index_data: dict | None, query: str, limit: int = 10, graph_hops: int = 1) -> list[SearchHit]:
-    documents = core_documents(graph) + index_documents(index_data)
+def search(graph, index_data: dict | None, query: str, limit: int = 10, graph_hops: int = 1,
+           only_tasks: bool = False) -> list[SearchHit]:
+    if not 1 <= limit <= 50:
+        raise ValueError('Search limit must be between 1 and 50')
+    documents = core_documents(graph)
+    if only_tasks:
+        documents = [item for item in documents if item['type'] == 'Task']
+        graph_hops = 0  # Avoid adjacent non-task hits and wasted context tokens.
+    else:
+        documents += index_documents(index_data)
     by_key = {doc['key']: doc for doc in documents}
     lexical_raw = BM25(documents).scores(query)
     max_lex = max(lexical_raw.values(), default=1.0)
