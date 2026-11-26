@@ -247,6 +247,130 @@ class MediatorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate(Store.read(state), target, self.ontology)
 
+
+    def test_v4_fixed_template_and_optional_fields(self):
+        from task_contract import LIST_SECTIONS, TASK_DETAILS, template, FORMAT_VERSION
+        import math
+        reference = template()
+        self.assertEqual(FORMAT_VERSION, 4)
+        self.assertEqual(reference['formatVersion'], FORMAT_VERSION)
+        self.assertEqual({key for key in reference if key in TASK_DETAILS}, TASK_DETAILS)
+        self.assertEqual({k for k in LIST_SECTIONS if reference[k] != []}, set())
+        target = self.root / 'v4-example'
+        target.mkdir()
+        bootstrap(target, self.ontology)
+        state = target / 'knowledge.owl'
+        path = target / '.ontolink/tasks/task-discover.json'
+        initial = json.loads(path.read_text(encoding='utf-8'))
+        self.assertEqual(initial['formatVersion'], 4)
+        for k in TASK_DETAILS:
+            self.assertNotIn(k, initial)
+        value = {
+            'id': 'task-discover', 'type': 'Task',
+            'actors': [{'id': 'AI-01', 'role': 'Backend'}],
+            'files': [{'path': 'src/api.cs'}],
+            'inputs': [{'path': 'spec.md'}],
+            'outputs': [{'path': 'src/api.cs'}],
+            'steps': [{'id': 'step-1', 'title': 'Implement endpoint'}],
+            'reports': [{'id': 'report-1', 'summary': 'Service is unreachable'}],
+            'recommendations': [{'id': 'rec-1', 'summary': 'Check provider status'}],
+            'warnings': [{'id': 'warn-1', 'summary': 'Missing approvals'}],
+            'blockers': [{'id': 'block-1', 'summary': 'Await review'}],
+            'confidence': [{'id': 'quality', 'target': 'test coverage',
+                            'method': 'review', 'rationale': 'Fixtures only',
+                            'calibrated': False, 'value': 0.72}],
+            'likelihood': [{'id': 'outage', 'eventScope': 'provider outage',
+                            'timeHorizon': 'next day', 'method': 'incident review',
+                            'rationale': 'No calibrated data', 'calibrated': False}],
+            'timestamps': {'startedAt': '2026-11-26T08:00:00+03:00'},
+            'lastUpdate': 'Validated JSON sections'
+        }
+        update_file(state, value, 0, self.ontology)
+        doc = json.loads(path.read_text())
+        self.assertEqual(doc['formatVersion'], 4)
+        self.assertEqual(doc['confidence'][0]['value'], 0.72)
+        self.assertNotIn('value', doc['likelihood'][0])
+        self.assertEqual(doc['timestamps'], value['timestamps'])
+        self.assertNotIn('events', doc)
+        self.assertNotIn('resourceFields', doc)
+        self.assertNotIn('dependsOn', doc['properties'])
+        self.assertFalse((target / '.ontolink/evidence').exists())
+        validate(Store.read(state), target, self.ontology)
+        from task_access import focused_work_packet
+        focus = focused_work_packet(Store.read(state), self.ontology, target, 'task-discover')
+        self.assertIn('confidence', focus['task_details'])
+        self.assertIn('likelihood', focus['task_details'])
+        self.assertIn('reports', focus['task_details'])
+        self.assertIn('steps', focus['task_details'])
+        update_file(state, {'id': 'task-discover', 'type': 'Task', 'lastUpdate': 'Next'}, 1, self.ontology)
+        after = json.loads(path.read_text())
+        self.assertEqual(after['confidence'], doc['confidence'])
+        self.assertEqual(after['likelihood'], doc['likelihood'])
+        self.assertEqual(after['lastUpdate'], 'Next')
+        self.assertEqual(after['revision'], 2)
+
+    def test_invalid_assessment_and_signal_metadata_rollback(self):
+        target = self.root / 'validation-fixture'
+        target.mkdir()
+        bootstrap(target, self.ontology)
+        state = target / 'knowledge.owl'
+        original = (target / '.ontolink/tasks/task-discover.json').read_bytes()
+        valid_confidence = {'target': 'quality', 'method': 'manual',
+                            'rationale': 'unverified', 'calibrated': False}
+        valid_likelihood = {'eventScope': 'outage', 'timeHorizon': '24 hours',
+                            'method': 'review', 'rationale': 'incomplete',
+                            'calibrated': False}
+        bad = [
+            {'confidence': [{**valid_confidence, 'value': 1.4}]},
+            {'confidence': [{**valid_confidence, 'value': float('nan')}]},
+            {'confidence': [{**valid_confidence, 'value': True}]},
+            {'confidence': [{**valid_confidence, 'calibrated': 'false'}]},
+            {'confidence': [{'value': .5}]},
+            {'likelihood': [{**valid_likelihood, 'value': -.1}]},
+            {'likelihood': [{**valid_likelihood, 'timeHorizon': ''}]},
+            {'reports': [{'id': 'same'}], 'warnings': [{'id': 'same'}]},
+            {'assessments': [{'id': 'same'}], 'confidence': [
+                {'id': 'same', **valid_confidence}]},
+            {'timestamps': {'startedAt': 'not-a-date'}},
+            {'events': [{'type': 'Event'}]},
+        ]
+        for detail in bad:
+            with self.subTest(detail=detail), self.assertRaises(ValueError):
+                update_file(state, {'id': 'task-discover', 'type': 'Task', **detail},
+                            0, self.ontology)
+            self.assertEqual((target / '.ontolink/tasks/task-discover.json').read_bytes(), original)
+            self.assertEqual(int(Store.read(state).one(
+                Store.read(state).typed('Project')[0], O + 'revision')), 0)
+
+    def test_legacy_v2_task_upgrades_without_repeating_fields(self):
+        target = self.root / 'v2-migration'
+        target.mkdir()
+        bootstrap(target, self.ontology)
+        state = target / 'knowledge.owl'
+        graph = Store.read(state)
+        task = graph.typed('Task')[0]
+        path = target / '.ontolink/tasks/task-discover.json'
+        old = json.loads(path.read_text())
+        old['formatVersion'] = 2
+        old['resourceFields'] = ['belongsTo', 'phase']
+        old['events'] = []
+        old['properties']['belongsTo'] = old['relationships']['belongsTo']
+        old['properties']['status'] = [old['properties']['status']]
+        path.write_text(json.dumps(old, ensure_ascii=False))
+        import hashlib
+        graph.set(task, O + 'taskRecordHash', hashlib.sha256(path.read_bytes()).hexdigest())
+        graph.write(state)
+        validate(graph, target, self.ontology)
+        update_file(state, {'id': 'task-discover', 'type': 'Task',
+                            'lastUpdate': 'Migrated legacy v2'}, 0, self.ontology)
+        upgraded = json.loads(path.read_text())
+        self.assertEqual(upgraded['formatVersion'], 4)
+        self.assertNotIn('resourceFields', upgraded)
+        self.assertNotIn('events', upgraded)
+        self.assertNotIn('belongsTo', upgraded['properties'])
+        self.assertIn('belongsTo', upgraded['relationships'])
+        validate(Store.read(state), target, self.ontology)
+
     def test_project_scale_medium_and_large(self):
         medium = self.root / 'medium'
         medium.mkdir()

@@ -45,6 +45,13 @@ conforms, _, report = validate(state, shacl_graph=Graph().parse(core / 'assets/s
 if not conforms:
     raise SystemExit(report)
 subprocess.run([sys.executable, str(core / 'scripts/mediator.py'), 'validate', '--state', str(core / 'assets/examples/project.owl')], check=True)
+from importlib.util import spec_from_file_location, module_from_spec
+spec = spec_from_file_location('ontolink_task_contract', core / 'scripts/task_contract.py')
+task_contract = module_from_spec(spec); spec.loader.exec_module(task_contract)
+model = task_contract.template()
+assert model['formatVersion'] == task_contract.FORMAT_VERSION == 4
+assert {k for k in model if k in task_contract.TASK_DETAILS} == task_contract.TASK_DETAILS
+assert all(model[k] == [] for k in task_contract.LIST_SECTIONS)
 for script in [core / 'scripts/test_mediator.py', core / 'scripts/test_project_intelligence.py', root / 'scripts/test_project_rules.py', core / 'scripts/test_project_setup.py']:
     subprocess.run([sys.executable, str(script)], check=True)
 subprocess.run([sys.executable, str(root / 'scripts/generate_sitemap.py'), '--check'], check=True)

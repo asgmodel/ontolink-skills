@@ -151,7 +151,7 @@ def task_document(graph, node, revision, previous=None, detail=None):
                'properties': properties, 'relationships': relationships}
     for key in sorted(TASK_DETAILS):
         value = (detail or {}).get(key, (previous or {}).get(key))
-        if value is None or value == [] or value == '':
+        if value is None or value == [] or value == {} or value == '':
             continue
         if key in LIST_SECTIONS:
             if not isinstance(value, list):
@@ -251,7 +251,8 @@ def validate(graph, root, ontology, check_task_records=True):
                 raise ValueError('Task JSON identity mismatch')
             relations = document.get('relationships', {})
             props = document.get('properties', {})
-            if set(relations) & set(props):
+            legacy_v2 = document.get('formatVersion') == 2
+            if set(relations) & set(props) and not legacy_v2:
                 raise ValueError('Duplicate task relations across JSON sections')
             validate_sections(document)
             for key, values in relations.items():
@@ -262,7 +263,8 @@ def validate(graph, root, ontology, check_task_records=True):
             for key in ('status', 'title', 'phase', 'owner'):
                 actual = graph.one(task, O + key)
                 if key in props and props[key] != actual:
-                    raise ValueError('Task JSON graph property mismatch: ' + key)
+                    if not (legacy_v2 and props[key] == [actual]):
+                        raise ValueError('Task JSON graph property mismatch: ' + key)
         if graph.one(task, O + 'status') not in STATUSES or graph.one(task, O + 'phase') not in phase_ids:
             raise ValueError('Invalid task status or phase')
         if not graph.one(task, O + 'owner') or not graph.one(task, O + 'title') or not graph.values(task, O + 'requiredKind'):

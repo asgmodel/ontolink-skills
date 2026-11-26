@@ -50,18 +50,21 @@ def _task_document(graph, target, root):
         raise ValueError('Task JSON identity mismatch')
     validate_sections(data)
     props, rels = data.get('properties', {}), data.get('relationships', {})
-    if not isinstance(props, dict) or not isinstance(rels, dict) or set(props) & set(rels):
+    legacy_v2 = data.get('formatVersion') == 2
+    if not isinstance(props, dict) or not isinstance(rels, dict) or (
+            set(props) & set(rels) and not legacy_v2):
         raise ValueError('Invalid or duplicated task JSON sections')
     for field in _CORE:
         if field in props and props[field] != graph.one(target, O + field):
-            raise ValueError('Task JSON does not match ontology: ' + field)
+            if not (legacy_v2 and props[field] == [graph.one(target, O + field)]):
+                raise ValueError('Task JSON does not match ontology: ' + field)
     for field in _RELATIONS + ('belongsTo',):
         actual = sorted(graph.values(target, O + field))
         if field in rels:
             values = rels[field]
             if not isinstance(values, list) or values != sorted(set(values)) or values != actual:
                 raise ValueError('Task JSON relation mismatch: ' + field)
-        elif actual:
+        elif actual and not legacy_v2:
             raise ValueError('Missing task relation in JSON: ' + field)
     return data
 
