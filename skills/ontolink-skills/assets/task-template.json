@@ -1,0 +1,44 @@
+{
+  "formatVersion": 4,
+  "id": "task-id",
+  "type": "Task",
+  "uri": "urn:ontolink:project:project-id/task-id",
+  "revision": 0,
+  "updatedAt": "<generated UTC ISO-8601 timestamp>",
+  "properties": {
+    "title": "Describe the work",
+    "status": "TODO",
+    "owner": "coordinator",
+    "phase": "urn:ontolink:build",
+    "requiredKind": "implementation"
+  },
+  "relationships": {
+    "belongsTo": [
+      "urn:ontolink:project:project-id"
+    ],
+    "dependsOn": []
+  },
+  "actors": [],
+  "artifacts": [],
+  "assessments": [],
+  "blockers": [],
+  "communication": [],
+  "contracts": [],
+  "decisions": [],
+  "evidence": [],
+  "files": [],
+  "proofs": [],
+  "recommendations": [],
+  "requirements": [],
+  "risks": [],
+  "testResults": [],
+  "warnings": [],
+  "inputs": [],
+  "outputs": [],
+  "steps": [],
+  "reports": [],
+  "confidence": [],
+  "likelihood": [],
+  "timestamps": {},
+  "lastUpdate": ""
+}

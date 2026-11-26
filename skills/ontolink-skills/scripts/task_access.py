@@ -13,12 +13,11 @@ from pathlib import Path
 from mediator import (active_blocks, evidence_valid, identifier, phases, project,
                       short, task_gate, task_path)
 from rdf_store import O, TYPE
+from task_contract import TASK_DETAILS, validate_sections
 
 _HASH = set('0123456789abcdef')
 _CORE = ('title', 'status', 'owner', 'phase')
-_DETAIL = ('lastUpdate', 'files', 'proofs', 'evidence', 'artifacts', 'assessments',
-           'blockers', 'requirements', 'contracts', 'decisions', 'testResults',
-           'recommendations', 'risks', 'warnings', 'actors', 'communication')
+_DETAIL = tuple(sorted(TASK_DETAILS))
 _RELATIONS = ('dependsOn', 'usesArtifact', 'derivedFrom')
 
 
@@ -49,6 +48,7 @@ def _task_document(graph, target, root):
     if (not isinstance(data, dict) or data.get('id') != short(target)
             or data.get('type') != 'Task' or data.get('uri') != target):
         raise ValueError('Task JSON identity mismatch')
+    validate_sections(data)
     props, rels = data.get('properties', {}), data.get('relationships', {})
     if not isinstance(props, dict) or not isinstance(rels, dict) or set(props) & set(rels):
         raise ValueError('Invalid or duplicated task JSON sections')

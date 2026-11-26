@@ -24,7 +24,7 @@ The mediator inspects source footprint and proposes small / medium / large start
 2. Work on the actual code and checks. Keep full logs in their original project files. Refer to only relevant files and concise proof/evidence in the task record.
 3. Record a change using `mediator.py record --state ... --json '{"id":"task-discover","type":"Task","lastUpdate":"..."}' --expected-revision N`. Other typed records remain supported, but no new Event nodes are written.
 4. Re-query and validate. DONE requires completed dependencies, current artifacts, passing proof, and resolved blockers. Never invent successful checks or externally completed actions.
-5. Read [record contract](references/record-contract.md) only before writes; use [execution contract](references/execution-contract.md) only if the workflow requires more detail.
+5. Read [record contract](references/record-contract.md) and the fixed v4 template only before writes; use [execution contract](references/execution-contract.md) only if the workflow requires more detail.
 
 Do not copy entire ontologies, index history or all phase files into prompts. The JSON record is a SHA-256-linked snapshot; avoid repeating relations between `properties` and `relationships`. Context provides only the active task and a bounded task index.
 

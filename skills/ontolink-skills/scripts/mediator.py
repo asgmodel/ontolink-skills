@@ -12,6 +12,7 @@ import tempfile
 from datetime import datetime, timezone
 from xml.etree.ElementTree import ParseError
 from rdf_store import Store, O, TYPE
+from task_contract import FORMAT_VERSION, TASK_DETAILS, LIST_SECTIONS, validate_sections
 
 ROOT = Path(__file__).resolve().parents[1]
 ONTOLOGY = ROOT / 'assets' / 'ontolink.owl'
@@ -125,10 +126,6 @@ def task_gate(graph, task, root):
 
 
 # Task detail lives in one file; the graph stores a small routing projection.
-TASK_DETAILS = {'files', 'proofs', 'artifacts', 'evidence', 'assessments',
-                'blockers', 'communication', 'contracts', 'decisions',
-                'recommendations', 'requirements', 'risks', 'testResults',
-                'warnings', 'actors', 'lastUpdate'}
 TASK_LIMIT = 8
 
 
@@ -149,17 +146,14 @@ def task_document(graph, node, revision, previous=None, detail=None):
                   for key, values in sorted(properties.items())}
     relationships = {key: sorted(set(values))
                      for key, values in sorted(relationships.items())}
-    payload = {'formatVersion': 3, 'id': short(node), 'type': 'Task',
+    payload = {'formatVersion': FORMAT_VERSION, 'id': short(node), 'type': 'Task',
                'uri': node, 'revision': revision, 'updatedAt': stamp(),
                'properties': properties, 'relationships': relationships}
     for key in sorted(TASK_DETAILS):
         value = (detail or {}).get(key, (previous or {}).get(key))
         if value is None or value == [] or value == '':
             continue
-        if key == 'lastUpdate':
-            if not isinstance(value, (str, dict)):
-                raise ValueError('lastUpdate must be a string or object')
-        else:
+        if key in LIST_SECTIONS:
             if not isinstance(value, list):
                 raise ValueError('Task detail must be an array: ' + key)
             unique = {}
@@ -168,6 +162,7 @@ def task_document(graph, node, revision, previous=None, detail=None):
                 unique[token] = item
             value = list(unique.values())
         payload[key] = value
+    validate_sections(payload)
     return payload
 
 
@@ -258,6 +253,7 @@ def validate(graph, root, ontology, check_task_records=True):
             props = document.get('properties', {})
             if set(relations) & set(props):
                 raise ValueError('Duplicate task relations across JSON sections')
+            validate_sections(document)
             for key, values in relations.items():
                 if not isinstance(values, list) or len(values) != len(set(values)):
                     raise ValueError('Repeated task relation: ' + key)

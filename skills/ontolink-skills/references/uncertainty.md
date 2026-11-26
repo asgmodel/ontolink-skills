@@ -17,3 +17,5 @@ Do not interpret confidence=0.8 as an 80% event probability, multiply unrelated 
 Critical warnings are blocking. Explicit blocking warnings and OPEN blockers prevent closure of affected tasks, including project-wide and artifact-linked tasks. A confidence score never overrides a blocker or substitutes for a verification gate. Record signal resolution with its rationale and verify the actual prerequisite changed.
 
 The mediator presents relevant stored recommendations and the next eligible phase; it does not predict outcomes or automatically execute recommendations or send communications.
+
+Task-local optional `confidence` and `likelihood` sections follow the [task JSON contract](record-contract.md). They are separate arrays, never a fabricated combined score, and never justify marking a task DONE on their own.
