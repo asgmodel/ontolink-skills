@@ -455,6 +455,13 @@ def snapshot(graph, ontology, root, focus=None, budget=4000, compact=False):
             details = json.loads(task_path(root, selected).read_text(encoding='utf-8'))
             packet['active_task']['last_update'] = details.get('lastUpdate', details['updatedAt'])
             packet['active_task']['record_path'] = record
+            # Task-owned evidence is reference metadata, not a verified PASS claim.
+            # Real completion gates still require independently checked RDF Evidence.
+            for source, output in [('evidence', 'task_evidence_refs'),
+                                   ('proofs', 'task_proof_refs'),
+                                   ('files', 'task_file_refs')]:
+                if details.get(source):
+                    packet['active_task'][output] = details[source]
         packet['workflow_skill'] = phase['skill']
         packet['engineering_candidates'] = phase['engineering']
         packet['context'] = [node_data(n) for n in sorted(relevant - {selected, project(graph)})]
@@ -480,7 +487,8 @@ def snapshot(graph, ontology, root, focus=None, budget=4000, compact=False):
 
         active = ('id', 'type', 'title', 'owner', 'status', 'phase',
                   'requiredKind', 'dependsOn', 'usesArtifact', 'derivedFrom',
-                  'last_update', 'record_path')
+                  'last_update', 'record_path', 'task_evidence_refs',
+                  'task_proof_refs', 'task_file_refs')
         context = ('id', 'type', 'title', 'status', 'phase', 'owner',
                    'kind', 'path', 'summary', 'requiredKind',
                    'dependsOn', 'usesArtifact')
